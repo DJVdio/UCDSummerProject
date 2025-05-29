@@ -14,8 +14,13 @@ import { Link as RouterLink, useLocation } from "react-router-dom";
 import DashboardIcon from "@mui/icons-material/Dashboard";
 import PlaceIcon from "@mui/icons-material/Place";
 import TimelineIcon from "@mui/icons-material/Timeline";
+import "./SideNav.css";
 
-export default function SideNav({ width }) {
+interface SideNavProps {
+  width: number | string;
+}
+
+export default function SideNav({ width }: SideNavProps) {
   const { pathname } = useLocation();
 
   const menu = [
@@ -23,7 +28,7 @@ export default function SideNav({ width }) {
     { text: "Dashboard", icon: <DashboardIcon />, to: "/Dashboard" },
     { text: "Data Analysis", icon: <TimelineIcon />, to: "/data-analysis" },
   ];
-  const isActivePath = (to) =>
+  const isActivePath = (to: string) =>
     to === "/" ? pathname === "/" : pathname.startsWith(to);
 
   return (
@@ -37,18 +42,19 @@ export default function SideNav({ width }) {
           boxSizing: "border-box",
           bgcolor: "primary.main",
           color: "#fff",
+          pt: 3, pb: 4,
         },
       }}
     >
       {/* group name */}
       <Toolbar sx={{ px: 3 }}>
-        <Typography variant="h5" sx={{ fontWeight: 700 }}>
+        <Typography variant="h5" sx={{ fontWeight: 700, pl: 0.5 }}>
           group name
         </Typography>
       </Toolbar>
 
       {/* menu */}
-      <List sx={{ px: 1 }}>
+      <List className="sideList">
         {menu.map(({ text, icon, to }) => {
           const isActive = isActivePath(to);
           return (
@@ -82,7 +88,7 @@ export default function SideNav({ width }) {
                 },
               }}
             >
-              <ListItemIcon sx={{ color: "inherit" }}>{icon}</ListItemIcon>
+              <ListItemIcon sx={{ minWidth: 32, mr: 2, color: "inherit" }}>{icon}</ListItemIcon>
               <ListItemText primary={text} />
             </ListItemButton>
           );
