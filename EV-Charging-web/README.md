@@ -14,6 +14,9 @@ If you are developing a production application, we recommend using TypeScript wi
 ## Project start
 
 ```
-yarn isntall
+yarn install
 yarn dev
 ```
+
+## Project Document
+https://zhaoxuqing1995-1748565368674.atlassian.net/wiki/x/AgAC
