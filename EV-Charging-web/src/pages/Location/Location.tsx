@@ -1,7 +1,10 @@
+import MapView from "./../../components/mapView/MapView"
+import './Location.css'
+
 export default function Location() {
   return (
     <div className="home_page">
-      <h1>Map</h1>
+      <MapView />
     </div>
   );
 }
