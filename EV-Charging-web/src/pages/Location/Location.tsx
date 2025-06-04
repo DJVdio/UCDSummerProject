@@ -1,4 +1,5 @@
-import MapView from "./../../components/mapView/MapView"
+import MapView from "./../../components/mapView/MapView";
+
 import './Location.css'
 
 export default function Location() {

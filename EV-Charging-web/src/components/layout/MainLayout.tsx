@@ -2,7 +2,7 @@
 import { Box, Toolbar } from "@mui/material";
 import { Outlet } from "react-router-dom";
 import SideNav from "./SideNav";
-// import TopBar from "./TopBar";
+import TopBar from "./TopBar";
 
 const drawerWidth = 280;
 
@@ -14,11 +14,10 @@ export default function MainLayout() {
 
       {/* Right area */}
       <Box sx={{ flexGrow: 1, display: "flex", flexDirection: "column" }}>
-        {/* <TopBar drawerWidth={drawerWidth} /> */}
+        <TopBar drawerWidth={drawerWidth} />
+        <Toolbar sx={{height: "90px"}}/>
 
-        <Toolbar />
-
-        <Box component="main" sx={{ p: 3, overflow: "auto", flexGrow: 1 }}>
+        <Box component="main" sx={{ overflow: "auto", flexGrow: 1 }}>
           <Outlet />
         </Box>
       </Box>

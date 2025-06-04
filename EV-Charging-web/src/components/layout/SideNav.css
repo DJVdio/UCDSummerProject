@@ -1,3 +1,6 @@
+.MuiToolbar-root {
+  display: flex;
+}
 .sideList {
   margin: 20px 0; 
 

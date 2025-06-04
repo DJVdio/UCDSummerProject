@@ -1,6 +1,4 @@
-// src/components/layout/SideNav.jsx
 import {
-  Box,
   Drawer,
   List,
   ListItemButton,
@@ -26,7 +24,7 @@ export default function SideNav({ width }: SideNavProps) {
   const menu = [
     { text: "Location", icon: <PlaceIcon />, to: "/" },
     { text: "Dashboard", icon: <DashboardIcon />, to: "/Dashboard" },
-    { text: "Charging Station Ranking", icon: <TimelineIcon />, to: "/data-analysis" },
+    { text: "Charging Station Listing", icon: <TimelineIcon />, to: "/data-analysis" },
   ];
   const isActivePath = (to: string) =>
     to === "/" ? pathname === "/" : pathname.startsWith(to);
@@ -40,16 +38,16 @@ export default function SideNav({ width }: SideNavProps) {
         "& .MuiDrawer-paper": {
           width,
           boxSizing: "border-box",
-          bgcolor: "primary.main",
+          bgcolor: "primary.main", // your own hover color
           color: "#fff",
           pt: 3, pb: 4,
         },
       }}
     >
-      {/* group name */}
+      {/* project name */}
       <Toolbar sx={{ px: 3 }}>
         <Typography variant="h5" sx={{ fontWeight: 700, pl: 0.5 }}>
-          group name
+          EV Charging
         </Typography>
       </Toolbar>
 
