@@ -1,0 +1,88 @@
+.map-wrapper {
+  position: relative;
+  overflow: hidden;
+  flex: 1;
+}
+.legend-content {
+  position: absolute;
+  z-index: 1000;
+  top: 90px;
+  right: 16px;
+  background: rgba(255, 255, 255, 0.9);
+  border-radius: 8px;
+  width: 210px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  padding: 16px 20px;
+  display: flex; 
+  flex-wrap: wrap;
+  gap: 24px;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+.legend-kw {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;                           
+  flex: 1 1 210px;
+}
+
+.kw-detail {
+  font-size: 14px;
+  color: #333333;
+  line-height: 1.4;
+  padding-left: 12px;
+  position: relative;
+}
+
+.kw-detail::before {
+  content: '';
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background-color: #888888;
+  position: absolute;
+  left: 0;
+  top: 50%;
+  transform: translateY(-50%);
+}
+
+.legend-status {
+  display: flex;
+  flex-direction: column;
+  gap: 10px; 
+  flex: 1 1 200px;
+}
+
+.status-detail {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.status-icon {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+.available .status-icon {
+  background-color: #00FF00;
+}
+
+.occupied .status-icon {
+  background-color: #FF4500;
+}
+
+.offline .status-icon {
+  background-color: #000000;
+}
+
+.status-text {
+  font-size: 14px;
+  color: #444444;
+}
+
+@media (max-width: 480px) {
+  .legend-content {
+    flex-direction: column;
+    gap: 16px;
+  }
+}

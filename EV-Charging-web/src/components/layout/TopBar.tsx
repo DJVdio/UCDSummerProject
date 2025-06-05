@@ -3,7 +3,6 @@ import {
   Toolbar,
   Box,
 } from "@mui/material";
-import MapControl from "./../../components/mapView/MapControl"
 
 interface TopBarProps {
   drawerWidth: number;
@@ -28,9 +27,6 @@ export default function TopBar({ drawerWidth }: TopBarProps) {
           justifyContent: "flex-start",
         }}
       >
-        <Box sx={{ flexGrow: 1 }}>
-          <MapControl />
-        </Box>
       </Toolbar>
     </AppBar>
   );
