@@ -2,8 +2,11 @@ import { useEffect, useState, useRef } from 'react';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css'
 import { MapContainer, TileLayer, Marker, CircleMarker, Popup, FeatureGroup, GeoJSON } from 'react-leaflet';
+import { Fade, Paper, IconButton, Fab } from '@mui/material'
+import CloseIcon from '@mui/icons-material/Close';
+import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined';
 import MarkerClusterGroup from 'react-leaflet-cluster'
-// import { EditControl } from 'react-leaflet-draw';
+import { EditControl } from 'react-leaflet-draw';
 import { useAppSelector } from '../../hooks';
 import {Icon} from 'leaflet';
 import type { LatLngExpression } from 'leaflet';
@@ -101,33 +104,35 @@ export default function MapView() {
   const [markers, setMarkers] = useState<EVMarker[]>([]);
   // store GeoJSON Polygon
   const [polygonGeoJson, setPolygonGeoJson] = useState<GeoJSON.Geometry | null>(null);
+  // control legend
+  const [isLegendOpen, setLegendOpen] = useState(true);
   // when isCustomRegionEnabled = false, Clear polygons from the map
   const featureGroupRef = useRef<L.FeatureGroup<any> | null>(null);
 
 
   // // 当用户画完一个多边形或者矩形时
-  // const _onCreated = (e: any) => {
-  //   const layer = e.layer;
-  //   // Leaflet 的 layer.toGeoJSON() 一定会返回一个 Feature 对象
-  //   const feature = layer.toGeoJSON() as GeoJSON.Feature<GeoJSON.Polygon, GeoJSON.GeoJsonProperties>;
-  //   const geometry = feature.geometry;
+  const _onCreated = (e: any) => {
+    const layer = e.layer;
+    // Leaflet 的 layer.toGeoJSON() 一定会返回一个 Feature 对象
+    const feature = layer.toGeoJSON() as GeoJSON.Feature<GeoJSON.Polygon, GeoJSON.GeoJsonProperties>;
+    const geometry = feature.geometry;
 
-  //   // 先把以前的 shape 清掉（可选逻辑）
-  //   if (featureGroupRef.current) {
-  //     const fg = featureGroupRef.current as any;
-  //     fg.clearLayers();
-  //     fg.addLayer(layer);
-  //   }
+    // 先把以前的 shape 清掉（可选逻辑）
+    if (featureGroupRef.current) {
+      const fg = featureGroupRef.current as any;
+      fg.clearLayers();
+      fg.addLayer(layer);
+    }
 
-  //   // 更新到 state
-  //   setPolygonGeoJson(geometry);
-  // }
+    // 更新到 state
+    setPolygonGeoJson(geometry);
+  }
 
   // // User deletes an existing polygon
-  // const _onDeleted = () => {
-  //   setPolygonGeoJson(null);
-  //   setMarkers([]); // clear all ev charging
-  // };
+  const _onDeleted = () => {
+    setPolygonGeoJson(null);
+    setMarkers([]); // clear all ev charging
+  };
 
   // if isCustomRegionEnabled = false, clear the drawing layer and set polygonGeoJson to null
   useEffect(() => {
@@ -151,9 +156,10 @@ export default function MapView() {
     setMarkers(dataForDate);
   }, [isCustomRegionEnabled, currentLocationId, currentTime]);
 
-    useEffect(() => {
+  // request data of mock when isCustomRegionEnabled = true
+  useEffect(() => {
     if (isCustomRegionEnabled && polygonGeoJson && currentTime) {
-      // 这里你可以把 { geometry: polygonGeoJson, date: currentTime } 发给后端
+      // 把 { geometry: polygonGeoJson, date: currentTime } 发给后端
       // 模拟一下“先用 mock 拿回原始点，再在前端用 turf.js 过滤”
       const dataForDate = mockMarkersByDate[currentTime] ?? [];
       // TODO: 用 turf.booleanPointInPolygon 之类的方法筛一遍
@@ -282,25 +288,49 @@ export default function MapView() {
       </MapContainer>
       {/* —— show suggest —— */}
       <div className='legend-content'>
-          <div className='legend-kw'>
-            <div className='kw-detail'> &lt; 50 KW low power </div>
-            <div className='kw-detail'>50–150 kW mid-power </div>
-            <div className='kw-detail'>&gt; 150 kW high power</div>
+        <Fade
+          in={isLegendOpen}
+        >
+          <div className='legend-card'>
+            <IconButton
+              size="small"
+              sx={{ position: 'absolute', top: 4, right: 4, zIndex: 2000 }}
+              onClick={() => setLegendOpen(false)}
+            >
+              <CloseIcon fontSize="small" />
+            </IconButton>
+            <div className='legend-kw'>
+              <div className='kw-detail'> &lt; 50 KW low power </div>
+              <div className='kw-detail'>50–150 kW mid-power </div>
+              <div className='kw-detail'>&gt; 150 kW high power</div>
+            </div>
+            <div className='legend-status'>
+              <div className='status-detail available'>
+                <span className='status-icon'></span>
+                <span className='status-text'>Available</span>
+              </div>
+              <div className='status-detail occupied'>              
+                <span className='status-icon'></span>
+                <span className='status-text'>Occupied</span>
+              </div>
+              <div className='status-detail offline'>
+                <span className='status-icon'></span>
+                <span className='status-text'>Offline</span>
+              </div>
+            </div>
           </div>
-          <div className='legend-status'>
-            <div className='status-detail available'>
-              <span className='status-icon'></span>
-              <span className='status-text'>Available</span>
-            </div>
-            <div className='status-detail occupied'>              
-              <span className='status-icon'></span>
-              <span className='status-text'>Occupied</span>
-            </div>
-            <div className='status-detail offline'>
-              <span className='status-icon'></span>
-              <span className='status-text'>Offline</span>
-            </div>
-          </div>
+        </Fade>
+        {!isLegendOpen && (
+          <Fab
+            size="small"
+            color="primary"
+            aria-label="show legend"
+            className='button-fab'
+            onClick={() => setLegendOpen(true)}
+          >
+            <InfoOutlinedIcon />
+          </Fab>
+        )}
       </div>
     </div>
   );

@@ -81,7 +81,7 @@ export default function MapControl() {
           </FormControl>
 
           {/* —— Use Custom Region Switch —— */}
-          <FormControlLabel
+          {/* <FormControlLabel
             control={
               <Switch
                 checked={isCustomRegionEnabled}
@@ -107,7 +107,7 @@ export default function MapControl() {
             }
             label="Use Custom Region"
             className="custom-region-switch"
-          />
+          /> */}
         </div>
         {/* —— DatePicker —— */}
         <div className="date-picker-box">
