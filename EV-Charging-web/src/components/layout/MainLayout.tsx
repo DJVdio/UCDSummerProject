@@ -4,7 +4,7 @@ import { Outlet } from "react-router-dom";
 import SideNav from "./SideNav";
 import TopBar from "./TopBar";
 
-const drawerWidth = 280;
+const drawerWidth = 220;
 
 export default function MainLayout() {
   return (

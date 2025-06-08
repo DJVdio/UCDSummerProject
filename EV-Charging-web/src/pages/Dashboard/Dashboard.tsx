@@ -1,7 +1,9 @@
-export default function Dashboard() {
+import ChartControl from "./../../components/chartControl/ChartControl"
+
+export default function DataAnalysis() {
   return (
     <div className="home_page">
-      <h1>Dashboard</h1>
+      <ChartControl />
     </div>
   );
 }

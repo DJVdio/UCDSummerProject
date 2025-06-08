@@ -9,14 +9,14 @@ interface LocationOption {
 
 interface MapState {
   currentLocationId: string;
-  currentTime: string;
+  // currentTime: string;
   locations: LocationOption[];
   isCustomRegionEnabled: boolean;
 }
 
 const initialState: MapState = {
   currentLocationId: 'dublin',
-  currentTime: new Date().toISOString().split('T')[0], // form of date: 'YYYY-MM-DD'
+  // currentTime: new Date().toISOString().split('T')[0], // form of date: 'YYYY-MM-DD'
   locations: [
     { id: 'dublin', label: 'dublin', center: [53.35, -6.26] },
     { id: 'cork',   label: 'cork',   center: [51.898, -8.4756] },
@@ -32,14 +32,12 @@ const mapSlice = createSlice({
     setLocation(state, action: PayloadAction<string>) {
       state.currentLocationId = action.payload;
     },
-    setTime(state, action: PayloadAction<string>) {
-      state.currentTime = action.payload;
-    },
+
     setCustomRegionEnabled(state, action: PayloadAction<boolean>) {
       state.isCustomRegionEnabled = action.payload;
     },
   },
 });
 
-export const { setLocation, setTime, setCustomRegionEnabled } = mapSlice.actions;
+export const { setLocation, setCustomRegionEnabled } = mapSlice.actions;
 export default mapSlice.reducer;

@@ -2,17 +2,19 @@ import { useState, useEffect } from 'react';
 import { FormControl, InputLabel, Select, MenuItem, FormControlLabel, Switch } from '@mui/material';
 import {
   LocalizationProvider, 
-  DatePicker, 
+  DateTimePicker,
 } from '@mui/x-date-pickers';
 import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
 import { useAppDispatch, useAppSelector } from '../../hooks';
-import { setLocation, setTime, setCustomRegionEnabled } from '../../store/mapSlice';
+import { setTimePoint } from '../../store/timeSlice';
+import { setLocation, setCustomRegionEnabled } from '../../store/mapSlice';
 import './MapControl.css'
 
 export default function MapControl() {
   const dispatch = useAppDispatch();
-  const { locations, currentLocationId, currentTime, isCustomRegionEnabled } =
+  const { locations, currentLocationId, isCustomRegionEnabled } =
     useAppSelector(s => s.map);
+    const { timePoint } = useAppSelector(s => s.time);
   // console.log(locations, currentLocationId, currentTime);
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
 
@@ -27,14 +29,25 @@ export default function MapControl() {
   };
 
   useEffect(() => {
-    if (currentTime) {
-      const d = new Date(currentTime);
+    if (!timePoint) {
+      console.log('is there time?')
+      const now = new Date();
+      setSelectedDate(now);
+
+      const pad = (n: number) => n.toString().padStart(2, '0');
+      const dateString =
+        `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())} ` +
+        `${pad(now.getHours())}:${pad(now.getMinutes())}`;
+
+      dispatch(setTimePoint(dateString));
+    } else {
+      const d = new Date(timePoint);
       if (!isNaN(d.getTime())) {
         // console.log(d)
         setSelectedDate(d);
       }
     }
-  }, [currentTime]);
+  }, [timePoint]);
 
   // select date
   const handleDateChange = (date: Date | null) => {
@@ -46,10 +59,12 @@ export default function MapControl() {
     const year = date.getFullYear();
     const month = String(date.getMonth() + 1).padStart(2, '0');
     const day = String(date.getDate()).padStart(2, '0');
-    const dateString = `${year}-${month}-${day}`;
+    const hours = String(date.getHours()).padStart(2, '0');
+    const minutes = String(date.getMinutes()).padStart(2, '0');
+    const dateString = `${year}-${month}-${day} ${hours}:${minutes}`;
 
     // dispatch to Redux
-    dispatch(setTime(dateString));
+    dispatch(setTimePoint(dateString));
   };
 
   return (
@@ -113,7 +128,7 @@ export default function MapControl() {
         <div className="date-picker-box">
           {/* <Typography variant="caption">Select Date</Typography> */}
           <LocalizationProvider dateAdapter={AdapterDateFns}>
-            <DatePicker
+            {/* <DatePicker
               label="Date"
               value={selectedDate}
               onChange={handleDateChange}
@@ -129,6 +144,25 @@ export default function MapControl() {
                   },
                 },
               }}
+            /> */}
+            <DateTimePicker
+              label="Time picker"
+              value={selectedDate}
+              onChange={handleDateChange}
+              slotProps={{
+                textField: {
+                  size: 'small',
+                  variant: 'outlined',
+                  style: {
+                    padding: '6px 8px',
+                    fontSize: '0.875rem',
+                    borderRadius: '4px',
+                    border: '1px solid #ccc',
+                  },
+                },
+              }}
+              // minutesStep 选1 代表可以选任意分钟；如果想每5分钟一档就写 5
+              minutesStep={1}
             />
           </LocalizationProvider>
         </div>

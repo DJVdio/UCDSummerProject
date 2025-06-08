@@ -2,7 +2,7 @@ import { useEffect, useState, useRef } from 'react';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css'
 import { MapContainer, TileLayer, Marker, CircleMarker, Popup, FeatureGroup, GeoJSON } from 'react-leaflet';
-import { Fade, Paper, IconButton, Fab } from '@mui/material'
+import { Fade, IconButton, Fab } from '@mui/material'
 import CloseIcon from '@mui/icons-material/Close';
 import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined';
 import MarkerClusterGroup from 'react-leaflet-cluster'
@@ -42,7 +42,7 @@ interface EVMarker {
 
 // DEMO data, marker depends on date
 const mockMarkersByDate: Record<string, EVMarker[]> = {
-  '2025-06-01': [
+  '2025-06-01 18:15': [
     {
       lat: 53.355,
       lng: -6.266,
@@ -98,8 +98,9 @@ const mockMarkersByDate: Record<string, EVMarker[]> = {
 
 export default function MapView() {
   // const { key: locationKey } = useLocation(); // setting the only key
-  const { currentLocationId, currentTime, locations, isCustomRegionEnabled } =
+  const { currentLocationId, locations, isCustomRegionEnabled } =
     useAppSelector(s => s.map);
+  const { timePoint } = useAppSelector(s => s.time);
   // store makers from backend
   const [markers, setMarkers] = useState<EVMarker[]>([]);
   // store GeoJSON Polygon
@@ -147,21 +148,21 @@ export default function MapView() {
 
   // request data of mock when isCustomRegionEnabled = false
   useEffect(() => {
-    if (!currentTime) {
+    if (!timePoint) {
       setMarkers([]);
       console.log('currentTime is empty')
       return;
     }
-    const dataForDate = mockMarkersByDate[currentTime] ?? [];
+    const dataForDate = mockMarkersByDate[timePoint] ?? [];
     setMarkers(dataForDate);
-  }, [isCustomRegionEnabled, currentLocationId, currentTime]);
+  }, [isCustomRegionEnabled, currentLocationId, timePoint]);
 
   // request data of mock when isCustomRegionEnabled = true
   useEffect(() => {
-    if (isCustomRegionEnabled && polygonGeoJson && currentTime) {
+    if (isCustomRegionEnabled && polygonGeoJson && timePoint) {
       // 把 { geometry: polygonGeoJson, date: currentTime } 发给后端
       // 模拟一下“先用 mock 拿回原始点，再在前端用 turf.js 过滤”
-      const dataForDate = mockMarkersByDate[currentTime] ?? [];
+      const dataForDate = mockMarkersByDate[timePoint] ?? [];
       // TODO: 用 turf.booleanPointInPolygon 之类的方法筛一遍
       // const filtered = dataForDate.filter(pt => booleanPointInPolygon(point, polygonGeoJson));
       // setMarkers(filtered);
@@ -171,7 +172,7 @@ export default function MapView() {
     } else {
       console.log('err in request data of mock when isCustomRegionEnabled = false')
     }
-  }, [isCustomRegionEnabled, polygonGeoJson, currentTime]);
+  }, [isCustomRegionEnabled, polygonGeoJson, timePoint]);
 
   // current location
   const center: LatLngExpression =
@@ -180,7 +181,7 @@ export default function MapView() {
   return (
     <div className='map-wrapper'>
       <MapContainer
-        key={`${currentLocationId}-${currentTime}`}
+        key={`${currentLocationId}-${timePoint}`}
         center={center as LatLngExpression}
         zoom={13}
         scrollWheelZoom // true
