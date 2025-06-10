@@ -1,14 +1,16 @@
+from typing import List
 from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
 from sqlalchemy import func
 from app.database import get_db
 from app.models import City
+from app.schemas.response import StandardResponse, Response
 from app.schemas.city import CityResponse
 
 router = APIRouter()
 
 
-@router.get("/all", response_model=list[CityResponse])
+@router.get("/all", response_model=StandardResponse[List[CityResponse]])
 def get_all_cities(db: Session = Depends(get_db)):
     cities = db.query(
         City.city_id,
@@ -22,7 +24,7 @@ def get_all_cities(db: Session = Depends(get_db)):
         result.append({
             "city_id": city.city_id,
             "label": city.label,
-            "center": (city.lat, city.lon) if city.lon is not None else None
+            "center": [city.lat, city.lon] if city.lon is not None else None
         })
 
-    return result
+    return Response.ok(result)

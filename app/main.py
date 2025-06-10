@@ -1,4 +1,5 @@
 from fastapi import FastAPI
+from app.middleware.error_handlers import register_error_handlers
 from database import engine, Base
 from routers import city
 from fastapi.middleware.cors import CORSMiddleware
@@ -6,6 +7,8 @@ from fastapi.middleware.cors import CORSMiddleware
 Base.metadata.create_all(bind=engine)
 
 app = FastAPI()
+
+register_error_handlers(app)
 
 app.add_middleware(
     CORSMiddleware,
