@@ -22,7 +22,7 @@ def get_all_cities(db: Session = Depends(get_db)):
         result.append({
             "city_id": city.city_id,
             "label": city.label,
-            "center": (city.lon, city.lat) if city.lon is not None else None
+            "center": (city.lat, city.lon) if city.lon is not None else None
         })
 
     return result
