@@ -10,7 +10,7 @@ from app.schemas.city import CityResponse
 router = APIRouter()
 
 
-@router.get("/all", response_model=StandardResponse[List[CityResponse]])
+@router.get("/all")
 def get_all_cities(db: Session = Depends(get_db)):
     cities = db.query(
         City.city_id,
