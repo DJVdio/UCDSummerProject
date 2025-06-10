@@ -31,6 +31,7 @@ interface EVMarker {
   lat: number;
   lng: number;
   power_kW: number;
+  connectorType: string;
   popupInfo: {
     id: string;
     name: string;
@@ -47,48 +48,52 @@ const mockMarkersByDate: Record<string, EVMarker[]> = {
       lat: 53.355,
       lng: -6.266,
       power_kW: 50,
+      connectorType: 'CCS2',            // ← 新增
       popupInfo: {
         id: 'A-001',
         name: 'Station A',
-        description: '50kW Station (慢充)',
+        description: '50 kW Station (low)',
         status: 'available',
-        lastUpdated: '2025-06-01 08:15',
+        lastUpdated: '2025-06-01T08:15:00Z',
       },
     },
     {
       lat: 53.354,
       lng: -6.264,
       power_kW: 120,
+      connectorType: 'CHAdeMO',
       popupInfo: {
         id: 'B-001',
         name: 'Station B',
-        description: '120kW Station (中功率)',
+        description: '120 kW Station (中功率)',
         status: 'occupied',
-        lastUpdated: '2025-06-02 10:42',
+        lastUpdated: '2025-06-02T10:42:00Z',
       },
     },
     {
       lat: 53.356,
       lng: -6.268,
       power_kW: 200,
+      connectorType: 'CCS2',
       popupInfo: {
         id: 'C-001',
         name: 'Station C',
-        description: '200kW Station (高功率)',
+        description: '200 kW Station (high)',
         status: 'offline',
-        lastUpdated: '2025-06-02 09:20',
+        lastUpdated: '2025-06-02T09:20:00Z',
       },
     },
     {
       lat: 53.353,
       lng: -6.265,
       power_kW: 75,
+      connectorType: 'Type2',
       popupInfo: {
         id: 'D-001',
         name: 'Station D',
-        description: '75kW Station (中功率)',
+        description: '75 kW Station (mid)',
         status: 'available',
-        lastUpdated: '2025-06-03 07:55',
+        lastUpdated: '2025-06-03T07:55:00Z',
       },
     },
   ],
@@ -109,7 +114,6 @@ export default function MapView() {
   const [isLegendOpen, setLegendOpen] = useState(true);
   // when isCustomRegionEnabled = false, Clear polygons from the map
   const featureGroupRef = useRef<L.FeatureGroup<any> | null>(null);
-
 
   // // 当用户画完一个多边形或者矩形时
   const _onCreated = (e: any) => {
@@ -226,8 +230,8 @@ export default function MapView() {
             style={{ color: 'blue', weight: 2, fillOpacity: 0.1 }}
           />
         )} */}
-        {markers.map((m) => {
-          const { lat, lng, power_kW, popupInfo } = m;
+        {markers.map((marker) => {
+          const { lat, lng, power_kW, popupInfo } = marker;
           const radius = power_kW <= 50 ? 4 : power_kW <= 150 ? 8 : 10;
 
           const statusColor =
@@ -251,8 +255,8 @@ export default function MapView() {
           );
         })}
         <MarkerClusterGroup>
-          {markers.map((m) => {
-            const { lat, lng, popupInfo, power_kW } = m;
+          {markers.map((marker) => {
+            const { lat, lng, popupInfo, power_kW } = marker;
             // size of png 
             const iconWidth = 30;
             const iconHeight = 30;
@@ -277,7 +281,8 @@ export default function MapView() {
                   <div style={{ fontSize: 14, lineHeight: 1.4 }}>
                     <strong>ID:</strong> {popupInfo.id} <br />
                     <strong>Name:</strong> {popupInfo.name} <br />
-                    <strong>Power:</strong> {m.power_kW} kW <br />
+                    <strong>Power:</strong> {marker.power_kW} kW <br />
+                    <strong>Type:</strong> {marker.connectorType}
                     <strong>Status:</strong> {popupInfo.status} <br />
                     <strong>Last&nbsp;Updated:</strong> {popupInfo.lastUpdated}
                   </div>

@@ -7,14 +7,14 @@ import {
 import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
 import { useAppDispatch, useAppSelector } from '../../hooks';
 import { setTimePoint } from '../../store/timeSlice';
-import { setLocation, setCustomRegionEnabled } from '../../store/mapSlice';
+import { fetchCities, setLocation, setCustomRegionEnabled } from '../../store/mapSlice';
 import './MapControl.css'
 
 export default function MapControl() {
   const dispatch = useAppDispatch();
   const { locations, currentLocationId, isCustomRegionEnabled } =
     useAppSelector(s => s.map);
-    const { timePoint } = useAppSelector(s => s.time);
+  const { timePoint } = useAppSelector(s => s.time);
   // console.log(locations, currentLocationId, currentTime);
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
 
@@ -27,6 +27,14 @@ export default function MapControl() {
   const handleLocationChange = (locId: string) => {
     dispatch(setLocation(locId));
   };
+
+  useEffect(() => {
+    console.log(locations, 'locations')
+  }, [locations]);
+
+  useEffect(() => {
+    dispatch(fetchCities());
+  }, [dispatch]);
 
   useEffect(() => {
     if (!timePoint) {

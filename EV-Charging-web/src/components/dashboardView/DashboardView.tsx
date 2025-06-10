@@ -1,0 +1,129 @@
+import React, { useState, useCallback } from "react";
+import ReactECharts from "echarts-for-react";
+// import {  } from "@mui/material";
+import "./DashboardView.css"
+
+interface GenerationConsumptionPoint {
+  time: string;
+  generation: number;
+  consumption: number;
+}
+
+interface ChargingSessionPoint {
+  hour: number;
+  sessions: number;
+  energy: number;
+}
+
+function generateGenerationConsumptionData(): GenerationConsumptionPoint[] {
+  const out: GenerationConsumptionPoint[] = [];
+  for (let h = 0; h < 24; h++) {
+    const baseGen = 400 + Math.sin((h / 24) * Math.PI * 2) * 150;
+    const baseCon = 380 + Math.sin(((h + 4) / 24) * Math.PI * 2) * 130;
+    out.push({
+      time: `${h.toString().padStart(2, "0")}:00`,
+      generation: Math.round(baseGen + Math.random() * 20),
+      consumption: Math.round(baseCon + Math.random() * 20),
+    });
+  }
+  return out;
+}
+
+function generateChargingSessionData(): ChargingSessionPoint[] {
+  const out: ChargingSessionPoint[] = [];
+  for (let h = 0; h < 24; h++) {
+    const sessions = Math.round(
+      5 + Math.max(0, Math.cos(((h - 18) / 24) * Math.PI * 2)) * 20 + Math.random() * 3
+    );
+    const energy = sessions * (10 + Math.random() * 5);
+    out.push({ hour: h, sessions, energy: Math.round(energy) });
+  }
+  return out;
+}
+
+function generateUtilisationMatrix(): number[][] {
+  const stations = 10;
+  const matrix: number[][] = [];
+  for (let s = 0; s < stations; s++) {
+    const row: number[] = [];
+    const phaseShift = (s / stations) * Math.PI * 2;
+    for (let h = 0; h < 24; h++) {
+      const utilisation = Math.max(0, Math.sin(((h - 6) / 24) * Math.PI * 2 + phaseShift));
+      row.push(parseFloat(((utilisation * 0.9 + Math.random() * 0.1)).toFixed(2)));
+    }
+    matrix.push(row);
+  }
+  return matrix;
+}
+
+export default function DashboardView() {
+  const [genCon] = useState(generateGenerationConsumptionData);
+  const [charging] = useState(generateChargingSessionData);
+  const [utilisation] = useState(generateUtilisationMatrix);
+    const lineOption = useCallback(
+    () => ({
+      tooltip: { trigger: "axis" },
+      legend: { data: ["Generation", "Consumption"] },
+      xAxis: { type: "category", data: genCon.map((d) => d.time) },
+      yAxis: { type: "value", name: "kW" },
+      series: [
+        { name: "Generation", type: "line", smooth: true, data: genCon.map((d) => d.generation) },
+        { name: "Consumption", type: "line", smooth: true, data: genCon.map((d) => d.consumption) },
+      ],
+    }),
+    [genCon]
+  );
+
+  const barOption = useCallback(
+    () => ({
+      tooltip: { trigger: "axis" },
+      legend: { data: ["Sessions", "Energy"] },
+      xAxis: [{ type: "category", data: charging.map((d) => `${d.hour}:00`) }],
+      yAxis: [
+        { type: "value", name: "Sessions" },
+        { type: "value", name: "Energy (kWh)" },
+      ],
+      series: [
+        { name: "Sessions", type: "bar", yAxisIndex: 0, data: charging.map((d) => d.sessions) },
+        { name: "Energy", type: "bar", yAxisIndex: 1, data: charging.map((d) => d.energy) },
+      ],
+    }),
+    [charging]
+  );
+
+  const heatOption = useCallback(() => {
+    const data: [number, number, number][] = [];
+    utilisation.forEach((row, s) => row.forEach((val, h) => data.push([h, s, val])));
+    return {
+      tooltip: {
+        position: "top",
+        formatter: (p: any) => `Station ${p.value[1]}\n${p.value[0]}:00 – ${(p.value[2] * 100).toFixed(0)}%`,
+      },
+      xAxis: { type: "category", data: Array.from({ length: 24 }, (_, i) => `${i}:00`), splitArea: { show: true } },
+      yAxis: { type: "category", data: utilisation.map((_, i) => `S${i}`), splitArea: { show: true } },
+      visualMap: { min: 0, max: 1, calculable: true, orient: "horizontal", left: "center", bottom: 15 },
+      series: [{ name: "Utilisation", type: "heatmap", data, label: { show: false } }],
+    };
+  }, [utilisation]);
+  return (
+    <div className="dash-container">
+      {/* Top full‑width chart */}
+      <div className="dash-card">
+        <h3 className="dash-card-title">Grid Load vs Generation</h3>
+        <ReactECharts option={lineOption()} style={{ height: 400 }} />
+      </div>
+
+      {/* Bottom two‑column area */}
+      <div className="dash-bottom-row">
+        <div className="dash-card">
+          <h3 className="dash-card-title">Charging Sessions &amp; Energy Delivered</h3>
+          <ReactECharts option={barOption()} style={{ height: 360 }} />
+        </div>
+        <div className="dash-card">
+          <h3 className="dash-card-title">Station-level Utilisation</h3>
+          <ReactECharts option={heatOption()} style={{ height: 360 }} />
+        </div>
+      </div>
+    </div>
+  );
+}
