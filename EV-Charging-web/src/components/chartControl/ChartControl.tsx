@@ -32,18 +32,13 @@ export default function TimeRangeController() {
   useEffect(() => {
     if (!timeRange.timeStart || !timeRange.timeEnd) {
       console.log('is there time?')
-      const now = new Date();
-      const startOfDay = new Date(
-        now.getFullYear(),
-        now.getMonth(),
-        now.getDate(),
-        0, 0, 0, 0,
-      );
-      console.log(now)
+      const nowTime = new Date();
+      const oneDayAgo = new Date(nowTime.getTime() - 24 * 60 * 60 * 1000);
+      console.log(nowTime)
       dispatch(
         setTimeRange({
-          timeStart: startOfDay.toISOString(),
-          timeEnd:   now.toISOString(),
+          timeStart: oneDayAgo.toISOString(),
+          timeEnd: nowTime.toISOString(),
         })
       )
     }
@@ -96,6 +91,7 @@ export default function TimeRangeController() {
                 value={timeRange.timeStart ? new Date(timeRange.timeStart) : null}
                 onChange={onStartChange}
                 minutesStep={1}
+                disableFuture
                 slotProps={{ textField: { size: 'small' } }}
               />
               <DateTimePicker
@@ -103,6 +99,7 @@ export default function TimeRangeController() {
                 value={timeRange.timeEnd ? new Date(timeRange.timeEnd) : null}
                 onChange={onEndChange}
                 minutesStep={1}
+                disableFuture
                 slotProps={{ textField: { size: 'small' } }}
               />
             </Box>

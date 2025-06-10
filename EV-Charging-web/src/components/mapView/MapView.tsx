@@ -2,6 +2,7 @@ import { useEffect, useState, useRef } from 'react';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css'
 import { MapContainer, TileLayer, Marker, CircleMarker, Popup, FeatureGroup, GeoJSON } from 'react-leaflet';
+import { getMapMarkers, EVMarker } from './../../api/map';
 import { Fade, IconButton, Fab } from '@mui/material'
 import CloseIcon from '@mui/icons-material/Close';
 import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined';
@@ -19,101 +20,22 @@ const customIcon = new Icon({
   iconAnchor: [19, 38],
 });
 
-interface PopupInfo {
-  id: string;
-  name: string;
-  description: string;
-  status: string;
-  lastUpdated: string;
-}
-
-interface EVMarker {
-  lat: number;
-  lng: number;
-  power_kW: number;
-  connectorType: string;
-  popupInfo: {
-    id: string;
-    name: string;
-    description: string;
-    status: string;
-    lastUpdated: string;
-  };
-}
-
-// DEMO data, marker depends on date
-const mockMarkersByDate: Record<string, EVMarker[]> = {
-  '2025-06-01 18:15': [
-    {
-      lat: 53.355,
-      lng: -6.266,
-      power_kW: 50,
-      connectorType: 'CCS2',            // ← 新增
-      popupInfo: {
-        id: 'A-001',
-        name: 'Station A',
-        description: '50 kW Station (low)',
-        status: 'available',
-        lastUpdated: '2025-06-01T08:15:00Z',
-      },
-    },
-    {
-      lat: 53.354,
-      lng: -6.264,
-      power_kW: 120,
-      connectorType: 'CHAdeMO',
-      popupInfo: {
-        id: 'B-001',
-        name: 'Station B',
-        description: '120 kW Station (中功率)',
-        status: 'occupied',
-        lastUpdated: '2025-06-02T10:42:00Z',
-      },
-    },
-    {
-      lat: 53.356,
-      lng: -6.268,
-      power_kW: 200,
-      connectorType: 'CCS2',
-      popupInfo: {
-        id: 'C-001',
-        name: 'Station C',
-        description: '200 kW Station (high)',
-        status: 'offline',
-        lastUpdated: '2025-06-02T09:20:00Z',
-      },
-    },
-    {
-      lat: 53.353,
-      lng: -6.265,
-      power_kW: 75,
-      connectorType: 'Type2',
-      popupInfo: {
-        id: 'D-001',
-        name: 'Station D',
-        description: '75 kW Station (mid)',
-        status: 'available',
-        lastUpdated: '2025-06-03T07:55:00Z',
-      },
-    },
-  ],
-};
-
-
-
 export default function MapView() {
   // const { key: locationKey } = useLocation(); // setting the only key
   const { currentLocationId, locations, isCustomRegionEnabled } =
     useAppSelector(s => s.map);
   const { timePoint } = useAppSelector(s => s.time);
-  // store makers from backend
-  const [markers, setMarkers] = useState<EVMarker[]>([]);
   // store GeoJSON Polygon
   const [polygonGeoJson, setPolygonGeoJson] = useState<GeoJSON.Geometry | null>(null);
   // control legend
   const [isLegendOpen, setLegendOpen] = useState(true);
   // when isCustomRegionEnabled = false, Clear polygons from the map
   const featureGroupRef = useRef<L.FeatureGroup<any> | null>(null);
+  // use for api
+  const [loading, setLoading] = useState<boolean>(true);
+  const [error, setError] = useState<string | null>(null);
+  // store makers from backend
+  const [markers, setMarkers] = useState<EVMarker[]>([]);
 
   // // 当用户画完一个多边形或者矩形时
   const _onCreated = (e: any) => {
@@ -152,27 +74,50 @@ export default function MapView() {
 
   // request data of mock when isCustomRegionEnabled = false
   useEffect(() => {
-    if (!timePoint) {
+    if (!timePoint || !currentLocationId) {
       setMarkers([]);
-      console.log('currentTime is empty')
+      console.log('currentTime or currentLocationId is empty')
       return;
     }
-    const dataForDate = mockMarkersByDate[timePoint] ?? [];
-    setMarkers(dataForDate);
+    setLoading(true);
+    setError(null);
+    async function fetchAndFilter() {
+      try {
+        const res = await getMapMarkers();
+        // Processing timePoint format (e.g. ‘2025-06-01 18:15’ to ISO)
+        // const key = timePoint.includes(' ')
+        //   ? `${timePoint.replace(' ', 'T')}:00Z`
+        //   : timePoint;
+        let pts = res.data[timePoint] || [];
+        // console.log('pts', res.data, timePoint)
+        setMarkers(pts);
+      } catch (err) {
+        console.error('Failed to load charging post data', err);
+        setError('Failed to load charging post data, please try again later.');
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    fetchAndFilter();
   }, [isCustomRegionEnabled, currentLocationId, timePoint]);
 
   // request data of mock when isCustomRegionEnabled = true
   useEffect(() => {
     if (isCustomRegionEnabled && polygonGeoJson && timePoint) {
       // 把 { geometry: polygonGeoJson, date: currentTime } 发给后端
-      // 模拟一下“先用 mock 拿回原始点，再在前端用 turf.js 过滤”
-      const dataForDate = mockMarkersByDate[timePoint] ?? [];
+        // 若启用自定义区域并已绘制多边形，则过滤
+        // if (isCustomRegionEnabled && polygonGeoJson) {
+          // TODO: 引入 turf.booleanPointInPolygon 进行空间过滤
+          // pts = pts.filter(pt => booleanPointInPolygon(L.latLng(pt.lat, pt.lng), polygonGeoJson));
+        // }
+      // const dataForDate = mockMarkersByDate[timePoint] ?? [];
       // TODO: 用 turf.booleanPointInPolygon 之类的方法筛一遍
       // const filtered = dataForDate.filter(pt => booleanPointInPolygon(point, polygonGeoJson));
       // setMarkers(filtered);
 
       // demo 暂时先不做空间过滤，直接返回所有
-      setMarkers(dataForDate);
+      // setMarkers(dataForDate);
     } else {
       console.log('err in request data of mock when isCustomRegionEnabled = false')
     }

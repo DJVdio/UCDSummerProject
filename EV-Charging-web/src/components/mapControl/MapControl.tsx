@@ -136,27 +136,11 @@ export default function MapControl() {
         <div className="date-picker-box">
           {/* <Typography variant="caption">Select Date</Typography> */}
           <LocalizationProvider dateAdapter={AdapterDateFns}>
-            {/* <DatePicker
-              label="Date"
-              value={selectedDate}
-              onChange={handleDateChange}
-              slotProps={{
-                textField: {
-                  size: 'small',
-                  variant: 'outlined',
-                  style: {
-                    padding: '6px 8px',
-                    fontSize: '0.875rem',
-                    borderRadius: '4px',
-                    border: '1px solid #ccc',
-                  },
-                },
-              }}
-            /> */}
             <DateTimePicker
               label="Time picker"
               value={selectedDate}
               onChange={handleDateChange}
+              disableFuture
               slotProps={{
                 textField: {
                   size: 'small',
