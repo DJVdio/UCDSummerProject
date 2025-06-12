@@ -19,4 +19,4 @@ yarn dev
 ```
 
 ## Project Document
-https://zhaoxuqing1995-1748565368674.atlassian.net/wiki/x/AgAC
+https://codecraftersummerproject.atlassian.net/wiki/spaces/SCRUM/overview
