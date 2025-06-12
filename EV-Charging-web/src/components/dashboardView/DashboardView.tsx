@@ -1,6 +1,7 @@
-import React, { useState, useCallback } from "react";
+import { useEffect, useState, useCallback } from "react";
 import ReactECharts from "echarts-for-react";
 // import {  } from "@mui/material";
+import { getGenerationConsumption, getChargingSessions, getStationUtilisation, GenerationConsumption } from './../../api/map';
 import "./DashboardView.css"
 
 interface GenerationConsumptionPoint {
@@ -10,66 +11,138 @@ interface GenerationConsumptionPoint {
 }
 
 interface ChargingSessionPoint {
-  hour: number;
+  time: string;
   sessions: number;
   energy: number;
 }
 
-function generateGenerationConsumptionData(): GenerationConsumptionPoint[] {
-  const out: GenerationConsumptionPoint[] = [];
-  for (let h = 0; h < 24; h++) {
-    const baseGen = 400 + Math.sin((h / 24) * Math.PI * 2) * 150;
-    const baseCon = 380 + Math.sin(((h + 4) / 24) * Math.PI * 2) * 130;
-    out.push({
-      time: `${h.toString().padStart(2, "0")}:00`,
-      generation: Math.round(baseGen + Math.random() * 20),
-      consumption: Math.round(baseCon + Math.random() * 20),
-    });
-  }
-  return out;
-}
+// const generateGenerationConsumptionData = (): GenerationConsumptionPoint[] => {
+//   const out: GenerationConsumptionPoint[] = [];
+//   for (let h = 0; h < 24; h++) {
+//     const baseGen = 400 + Math.sin((h / 24) * Math.PI * 2) * 150;
+//     const baseCon = 380 + Math.sin(((h + 4) / 24) * Math.PI * 2) * 130;
+//     out.push({
+//       time: `${h.toString().padStart(2, "0")}:00`,
+//       generation: Math.round(baseGen + Math.random() * 20),
+//       consumption: Math.round(baseCon + Math.random() * 20),
+//     });
+//   }
+//   return out;
+// }
 
-function generateChargingSessionData(): ChargingSessionPoint[] {
-  const out: ChargingSessionPoint[] = [];
-  for (let h = 0; h < 24; h++) {
-    const sessions = Math.round(
-      5 + Math.max(0, Math.cos(((h - 18) / 24) * Math.PI * 2)) * 20 + Math.random() * 3
-    );
-    const energy = sessions * (10 + Math.random() * 5);
-    out.push({ hour: h, sessions, energy: Math.round(energy) });
-  }
-  return out;
-}
+// const generateChargingSessionData = (): ChargingSessionPoint[] => {
+//   const out: ChargingSessionPoint[] = [];
+//   for (let h = 0; h < 24; h++) {
+//     const sessions = Math.round(
+//       5 + Math.max(0, Math.cos(((h - 18) / 24) * Math.PI * 2)) * 20 + Math.random() * 3
+//     );
+//     const energy = sessions * (10 + Math.random() * 5);
+//     out.push({ time: h, sessions, energy: Math.round(energy) });
+//   }
+//   return out;
+// }
 
-function generateUtilisationMatrix(): number[][] {
-  const stations = 10;
-  const matrix: number[][] = [];
-  for (let s = 0; s < stations; s++) {
-    const row: number[] = [];
-    const phaseShift = (s / stations) * Math.PI * 2;
-    for (let h = 0; h < 24; h++) {
-      const utilisation = Math.max(0, Math.sin(((h - 6) / 24) * Math.PI * 2 + phaseShift));
-      row.push(parseFloat(((utilisation * 0.9 + Math.random() * 0.1)).toFixed(2)));
-    }
-    matrix.push(row);
-  }
-  return matrix;
-}
+// const generateUtilisationMatrix = (): number[][] => {
+//   const stations = 10;
+//   const matrix: number[][] = [];
+//   for (let s = 0; s < stations; s++) {
+//     const row: number[] = [];
+//     const phaseShift = (s / stations) * Math.PI * 2;
+//     for (let h = 0; h < 24; h++) {
+//       const utilisation = Math.max(0, Math.sin(((h - 6) / 24) * Math.PI * 2 + phaseShift));
+//       row.push(parseFloat(((utilisation * 0.9 + Math.random() * 0.1)).toFixed(2)));
+//     }
+//     matrix.push(row);
+//   }
+//   return matrix;
+// }
 
 export default function DashboardView() {
-  const [genCon] = useState(generateGenerationConsumptionData);
-  const [charging] = useState(generateChargingSessionData);
-  const [utilisation] = useState(generateUtilisationMatrix);
-    const lineOption = useCallback(
+  // const [genCon] = useState(generateGenerationConsumptionData);
+  // const [charging] = useState(generateChargingSessionData);
+  // const [utilisation] = useState(generateUtilisationMatrix);
+  const [genCon, setGenCon] = useState<GenerationConsumptionPoint[]>([]);
+  const [charging, setCharging] = useState<ChargingSessionPoint[]>([]);
+  const [utilisation, setUtilisation] = useState<number[][]>([]);
+  // use for api
+  const [loading, setLoading] = useState<boolean>(true);
+  const [error, setError] = useState<string | null>(null);
+  // get data of three chart
+  useEffect(() => {
+    // get generation/consumption
+    async function getGenerationData() {
+      try {
+        const res = await getGenerationConsumption();
+        console.log(res.data, 'dash res of gene')
+        const arr = res.data.generation_consumption.data.map(d => ({
+          // console.log(d)
+          time: d.time,
+          generation: d.generation_kw,
+          consumption: d.consumption_kw,
+        }));
+        setGenCon(arr);
+      } catch (err) {
+        console.error('Failed to load GenerationConsumption data', err);
+        setError('Failed to load GenerationConsumption data, please try again later.');
+      } finally {
+        setLoading(false);
+      }
+    }
+    getGenerationData();    
+    // get charging sessions
+    async function getGenAndConData() {
+      try {
+        const res = await getChargingSessions();
+        console.log(res.data, 'dash res of gene')
+        const arr = res.data.charging_sessions.data.map(d => ({
+          time: d.time,
+          sessions: d.session_count,
+          energy: d.energy_kwh,
+        }));
+        setCharging(arr);
+      } catch (err) {
+        console.error('Failed to load GenerationConsumption data', err);
+        setError('Failed to load GenerationConsumption data, please try again later.');
+      } finally {
+        setLoading(false);
+      }
+    }
+    getGenAndConData(); 
+
+    // get station utilisation
+
+  }, []);
+  const lineOption = useCallback(
     () => ({
       tooltip: { trigger: "axis" },
       legend: { data: ["Generation", "Consumption"] },
-      xAxis: { type: "category", data: genCon.map((d) => d.time) },
+      // xAxis: { type: "category", data: genCon.map((d) => d.time) },
+      xAxis: {
+        type: 'time',
+        boundaryGap: false,
+        axisLabel: {
+          formatter: (ts: number) => {
+            const d = new Date(ts);
+            return d.toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'});
+          }
+        }
+      },
       yAxis: { type: "value", name: "kW" },
       series: [
-        { name: "Generation", type: "line", smooth: true, data: genCon.map((d) => d.generation) },
-        { name: "Consumption", type: "line", smooth: true, data: genCon.map((d) => d.consumption) },
-      ],
+        {
+          name: 'Generation',
+          type: 'line',
+          smooth: true,
+          // key：把 ISO 字符串转成毫秒数
+          data: genCon.map(d => [new Date(d.time).getTime(), d.generation]),
+        },
+        {
+          name: 'Consumption',
+          type: 'line',
+          smooth: true,
+          data: genCon.map(d => [new Date(d.time).getTime(), d.consumption]),
+        }
+      ]
     }),
     [genCon]
   );
@@ -78,15 +151,33 @@ export default function DashboardView() {
     () => ({
       tooltip: { trigger: "axis" },
       legend: { data: ["Sessions", "Energy"] },
-      xAxis: [{ type: "category", data: charging.map((d) => `${d.hour}:00`) }],
+      xAxis: {
+        type: 'time',
+        axisLabel: {
+          formatter: (ts: number) => {
+            const d = new Date(ts);
+            return d.toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'});
+          }
+        }
+      },
       yAxis: [
         { type: "value", name: "Sessions" },
         { type: "value", name: "Energy (kWh)" },
       ],
       series: [
-        { name: "Sessions", type: "bar", yAxisIndex: 0, data: charging.map((d) => d.sessions) },
-        { name: "Energy", type: "bar", yAxisIndex: 1, data: charging.map((d) => d.energy) },
-      ],
+        {
+          name:'Sessions',
+          type:'bar',
+          yAxisIndex:0,
+          data: charging.map(d => [new Date(d.time).getTime(), d.sessions])
+        },
+        {
+          name:'Energy',
+          type:'bar',
+          yAxisIndex:1,
+          data: charging.map(d => [new Date(d.time).getTime(), d.energy])
+        }
+      ]
     }),
     [charging]
   );

@@ -81,7 +81,7 @@ export default function MapView() {
     }
     setLoading(true);
     setError(null);
-    async function fetchAndFilter() {
+    async function getMarkersData() {
       try {
         const res = await getMapMarkers();
         // Processing timePoint format (e.g. ‘2025-06-01 18:15’ to ISO)
@@ -99,7 +99,7 @@ export default function MapView() {
       }
     }
 
-    fetchAndFilter();
+    getMarkersData();
   }, [isCustomRegionEnabled, currentLocationId, timePoint]);
 
   // request data of mock when isCustomRegionEnabled = true
@@ -227,7 +227,7 @@ export default function MapView() {
                     <strong>ID:</strong> {popupInfo.id} <br />
                     <strong>Name:</strong> {popupInfo.name} <br />
                     <strong>Power:</strong> {marker.power_kW} kW <br />
-                    <strong>Type:</strong> {marker.connectorType}
+                    <strong>Type:</strong> {marker.connectorType}<br />
                     <strong>Status:</strong> {popupInfo.status} <br />
                     <strong>Last&nbsp;Updated:</strong> {popupInfo.lastUpdated}
                   </div>
