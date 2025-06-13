@@ -1,24 +1,16 @@
 from fastapi import APIRouter, Depends
-from fastapi import APIRouter, Depends
-from sqlalchemy import func
 from sqlalchemy.orm import Session
 
 from app.database import get_db
-from app.models import City
 from app.schemas.response import Response
+from app.server.city import get_all_cities
 
 router = APIRouter()
 
 
 @router.get("/all")
-def get_all_cities(db: Session = Depends(get_db)):
-    cities = db.query(
-        City.city_id,
-        City.label,
-        func.ST_X(City.center).label("lon"),
-        func.ST_Y(City.center).label("lat")
-    ).all()
-
+def get_all_cities_api(db: Session = Depends(get_db)):
+    cities = get_all_cities(db)
     result = []
     for city in cities:
         result.append({

@@ -8,6 +8,14 @@ Base.metadata.create_all(bind=engine)
 
 app = FastAPI()
 
+ROUTERS = [
+    (city.router,           "/cities",           ["cities"]),
+    (charging_stations.router, "/charging_stations", ["charging_stations"]),
+    (station_status.router,   "/station_status",   ["station_status"]),
+]
+for router, prefix, tags in ROUTERS:
+    app.include_router(router, prefix=prefix, tags=tags)
+
 register_error_handlers(app)
 
 app.add_middleware(
@@ -18,21 +26,6 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-app.include_router(
-    city.router,
-    prefix="/cities",
-    tags=["cities"]
-)
-app.include_router(
-    charging_stations.router,
-    prefix="/charging_stations",
-    tags=["charging_stations"]
-)
-app.include_router(
-    station_status.router,
-    prefix="/station_status",
-    tags=["station_status"]
-)
 
 if __name__ == "__main__":
     import uvicorn
