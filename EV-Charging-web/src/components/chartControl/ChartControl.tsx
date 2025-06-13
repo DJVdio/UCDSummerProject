@@ -5,7 +5,7 @@ import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
 import { Box } from '@mui/material';
 import { useAppDispatch, useAppSelector } from '../../hooks';
 import { setTimeRange, setTimePoint } from './../../store/timeSlice';
-import { setLocation } from '../../store/mapSlice';
+import { fetchCities, setLocation } from '../../store/mapSlice';
 import "./ChartControl.css"
 
 export default function TimeRangeController() {
@@ -18,6 +18,15 @@ export default function TimeRangeController() {
   const handleLocationChange = (locId: string) => {
     dispatch(setLocation(locId));
   };
+
+  useEffect(() => {
+    console.log(locations, 'locations')
+  }, [locations]);
+
+  useEffect(() => {
+    dispatch(fetchCities());
+  }, [dispatch]);
+
   // DateTimePickers update
   const onStartChange = (date: Date | null) => {
     if (!date) return;

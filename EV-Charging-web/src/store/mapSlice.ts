@@ -21,9 +21,9 @@ const initialState: MapState = {
   currentLocationId: 'dublin',
   // currentTime: new Date().toISOString().split('T')[0], // form of date: 'YYYY-MM-DD'
   locations: [
-    { id: 'dublin', label: 'dublin', center: [53.35, -6.26] },
-    { id: 'cork',   label: 'cork',   center: [51.898, -8.4756] },
-    { id: 'galway', label: 'galway', center: [53.2707, -9.0568] },
+    { id: 'dublin', label: 'Dublin', center: [53.35, -6.26] },
+    { id: 'cork',   label: 'Cork',   center: [51.898, -8.4756] },
+    { id: 'galway', label: 'Galway', center: [53.2707, -9.0568] },
   ],
   isCustomRegionEnabled: false,
   loading: false,

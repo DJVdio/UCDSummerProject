@@ -1,7 +1,7 @@
 import { useEffect, useState, useCallback } from "react";
 import ReactECharts from "echarts-for-react";
 // import {  } from "@mui/material";
-import { getGenerationConsumption, getChargingSessions, getStationUtilisation, GenerationConsumption } from './../../api/map';
+import { getGenerationConsumption, getChargingSessions, getStationUtilisation } from './../../api/map';
 import "./DashboardView.css"
 
 interface GenerationConsumptionPoint {
@@ -110,7 +110,26 @@ export default function DashboardView() {
     getGenAndConData(); 
 
     // get station utilisation
-
+    async function getUtilisation() {
+      try {
+        const res = await getStationUtilisation();
+        const stations = res.data.station_utilisation.stations;
+        // 每个站点一行，24 小时对应 0～23 index
+        const matrix = stations.map(st =>
+          st.data
+            // 按 timestamp 排序（如果后端乱序）
+            .sort((a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime())
+            .map(pt => pt.utilisation)
+        );
+        setUtilisation(matrix);
+      } catch (err) {
+        console.error(err);
+        setError('加载站点利用率数据失败');
+      } finally {
+        setLoading(false);
+      }
+    }
+    getUtilisation()
   }, []);
   const lineOption = useCallback(
     () => ({

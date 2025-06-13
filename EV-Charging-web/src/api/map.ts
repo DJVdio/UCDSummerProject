@@ -69,37 +69,55 @@ export interface GenConPayload {
   generation_consumption: GenerationConsumption;
 }
 export interface GenerationConsumption {
-  interval: string;
+  // interval: string;
   unit: string;
   data: { time: string; generation_kw: number; consumption_kw: number }[];
 }
-export interface SessionsAndEnergy {
-  date: string;
-  timezone: string;
-  charging_sessions: ChargingSessions;
-}
-export interface ChargingSessions {
-  interval: string;
-  units: { sessions: string; energy: string };
-  data: { time: string; session_count: number; energy_kwh: number }[];
-}
 
-export interface StationUtilisation {
-  interval: string;
-  unit: string;
-  stations: { station_id: string; utilisation: number[] }[];
-}
 export const getGenerationConsumption = async ():
   Promise<ChartResponse<GenConPayload>> => {
   const resp = await EV.get<ChartResponse<GenConPayload>>('/lineChart.mock.json');
   return resp.data;    // 这是 { code, message, data: GenerationConsumption }
 };
 
+export interface SessionsAndEnergy {
+  date: string;
+  timezone: string;
+  charging_sessions: ChargingSessions;
+}
+export interface ChargingSessions {
+  // interval: string;
+  units: { sessions: string; energy: string };
+  data: { time: string; session_count: number; energy_kwh: number }[];
+}
+
+export interface StationUtilisation {
+  // interval: string;
+  unit: string;
+  stations: { station_id: string; utilisation: number[] }[];
+}
+
 export const getChargingSessions = async ():
   Promise<ChartResponse<SessionsAndEnergy>> => {
   const resp = await EV.get<ChartResponse<SessionsAndEnergy>>('/barChart.mock.json');
   return resp.data;
 };
+export interface StationUtilisation {
+  date: string;
+  timezone: string;
+  station_utilisation: StationUtilisationData;
+}
+export interface StationUtilisationData {
+  unit: string;  // "ratio"
+  stations: StationRow[];
+}
+export interface StationRow {
+  station_id: string;
+  data: Array<{
+    timestamp: string;      // ISO string
+    utilisation: number;    // 0～1
+  }>;
+}
 
 export const getStationUtilisation = async ():
   Promise<ChartResponse<StationUtilisation>> => {
