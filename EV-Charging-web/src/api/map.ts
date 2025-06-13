@@ -66,15 +66,15 @@ export interface ChartResponse<T> {
 export interface GenConPayload {
   date: string;
   timezone: string;
-  generation_consumption: GenerationConsumption;
+  generation_gridload: GenerationConsumption;
 }
 export interface GenerationConsumption {
   // interval: string;
   unit: string;
-  data: { time: string; generation_kw: number; consumption_kw: number }[];
+  data: { time: string; generation_kw: number; gridload_kw: number }[];
 }
 
-export const getGenerationConsumption = async ():
+export const getGenerationGridload = async ():
   Promise<ChartResponse<GenConPayload>> => {
   const resp = await EV.get<ChartResponse<GenConPayload>>('/lineChart.mock.json');
   return resp.data;    // 这是 { code, message, data: GenerationConsumption }

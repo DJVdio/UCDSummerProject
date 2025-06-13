@@ -1,7 +1,7 @@
 import { useEffect, useState, useCallback } from "react";
 import ReactECharts from "echarts-for-react";
 // import {  } from "@mui/material";
-import { getGenerationConsumption, getChargingSessions, getStationUtilisation } from './../../api/map';
+import { getGenerationGridload, getChargingSessions, getStationUtilisation } from './../../api/map';
 import "./DashboardView.css"
 
 interface GenerationConsumptionPoint {
@@ -70,15 +70,15 @@ export default function DashboardView() {
   // get data of three chart
   useEffect(() => {
     // get generation/consumption
-    async function getGenerationData() {
+    async function getGenerationGridloadData() {
       try {
-        const res = await getGenerationConsumption();
+        const res = await getGenerationGridload();
         console.log(res.data, 'dash res of gene')
-        const arr = res.data.generation_consumption.data.map(d => ({
+        const arr = res.data.generation_gridload.data.map(d => ({
           // console.log(d)
           time: d.time,
           generation: d.generation_kw,
-          consumption: d.consumption_kw,
+          consumption: d.gridload_kw,
         }));
         setGenCon(arr);
       } catch (err) {
@@ -88,7 +88,7 @@ export default function DashboardView() {
         setLoading(false);
       }
     }
-    getGenerationData();    
+    getGenerationGridloadData();    
     // get charging sessions
     async function getGenAndConData() {
       try {
@@ -156,7 +156,7 @@ export default function DashboardView() {
           data: genCon.map(d => [new Date(d.time).getTime(), d.generation]),
         },
         {
-          name: 'Consumption',
+          name: 'grid load',
           type: 'line',
           smooth: true,
           data: genCon.map(d => [new Date(d.time).getTime(), d.consumption]),
