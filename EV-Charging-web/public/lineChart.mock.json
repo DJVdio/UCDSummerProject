@@ -1,0 +1,37 @@
+{
+  "code": 200,
+  "message": "OK",
+  "data": {
+    "date": "2025-06-09",
+    "timezone": "Europe/Dublin",
+    "generation_consumption": {
+      "unit": "kW",
+      "data": [
+        { "time": "2025-06-09T00:00:00Z", "generation_kw": 420, "gridload_kw": 390 },
+        { "time": "2025-06-09T01:00:00Z", "generation_kw": 415, "gridload_kw": 378 },
+        { "time": "2025-06-09T02:00:00Z", "generation_kw": 405, "gridload_kw": 365 },
+        { "time": "2025-06-09T03:00:00Z", "generation_kw": 390, "gridload_kw": 350 },
+        { "time": "2025-06-09T04:00:00Z", "generation_kw": 380, "gridload_kw": 340 },
+        { "time": "2025-06-09T05:00:00Z", "generation_kw": 370, "gridload_kw": 330 },
+        { "time": "2025-06-09T06:00:00Z", "generation_kw": 400, "gridload_kw": 360 },
+        { "time": "2025-06-09T07:00:00Z", "generation_kw": 500, "gridload_kw": 450 },
+        { "time": "2025-06-09T08:00:00Z", "generation_kw": 600, "gridload_kw": 600 },
+        { "time": "2025-06-09T09:00:00Z", "generation_kw": 650, "gridload_kw": 700 },
+        { "time": "2025-06-09T10:00:00Z", "generation_kw": 700, "gridload_kw": 800 },
+        { "time": "2025-06-09T11:00:00Z", "generation_kw": 750, "gridload_kw": 850 },
+        { "time": "2025-06-09T12:00:00Z", "generation_kw": 800, "gridload_kw": 900 },
+        { "time": "2025-06-09T13:00:00Z", "generation_kw": 820, "gridload_kw": 950 },
+        { "time": "2025-06-09T14:00:00Z", "generation_kw": 800, "gridload_kw": 1000 },
+        { "time": "2025-06-09T15:00:00Z", "generation_kw": 750, "gridload_kw": 950 },
+        { "time": "2025-06-09T16:00:00Z", "generation_kw": 700, "gridload_kw": 900 },
+        { "time": "2025-06-09T17:00:00Z", "generation_kw": 650, "gridload_kw": 850 },
+        { "time": "2025-06-09T18:00:00Z", "generation_kw": 600, "gridload_kw": 800 },
+        { "time": "2025-06-09T19:00:00Z", "generation_kw": 550, "gridload_kw": 750 },
+        { "time": "2025-06-09T20:00:00Z", "generation_kw": 500, "gridload_kw": 700 },
+        { "time": "2025-06-09T21:00:00Z", "generation_kw": 480, "gridload_kw": 650 },
+        { "time": "2025-06-09T22:00:00Z", "generation_kw": 460, "gridload_kw": 600 },
+        { "time": "2025-06-09T23:00:00Z", "generation_kw": 470, "gridload_kw": 495 }
+      ]
+    }
+  }
+}

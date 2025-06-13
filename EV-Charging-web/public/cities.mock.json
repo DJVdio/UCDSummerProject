@@ -1,0 +1,45 @@
+{
+	"code": 200,
+	"message": "OK",
+	"data": [{
+		"city_id": "dublin",
+		"label": "Dublin",
+		"center": [53.3498, -6.2603]
+	}, {
+		"city_id": "cork",
+		"label": "Cork",
+		"center": [51.8985, -8.4756]
+	}, {
+		"city_id": "galway",
+		"label": "Galway",
+		"center": [53.2707, -9.0568]
+	}, {
+		"city_id": "limerick",
+		"label": "Limerick",
+		"center": [52.6638, -8.6267]
+	}, {
+		"city_id": "waterford",
+		"label": "Waterford",
+		"center": [52.2593, -7.1101]
+	}, {
+		"city_id": "drogheda",
+		"label": "Drogheda",
+		"center": [53.7176, -6.3561]
+	}, {
+		"city_id": "dundalk",
+		"label": "Dundalk",
+		"center": [54.0, -6.4167]
+	}, {
+		"city_id": "swords",
+		"label": "Swords",
+		"center": [53.4597, -6.2181]
+	}, {
+		"city_id": "bray",
+		"label": "Bray",
+		"center": [53.2009, -6.1111]
+	}, {
+		"city_id": "navan",
+		"label": "Navan",
+		"center": [53.652, -6.6818]
+	}]
+}
