@@ -1,7 +1,7 @@
 from sqlalchemy import func
 from sqlalchemy.orm import Session
 
-from app.models import ChargingStation
+from models import ChargingStation
 
 def get_by_station_id(station_id, db: Session):
     charging_station = db.query(
