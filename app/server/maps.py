@@ -4,8 +4,8 @@ from sqlalchemy import and_, func
 from typing import Dict, List
 from datetime import datetime, date
 
-from app.models import StationStatus
-from app.server.charging_stations import get_by_city_id
+from models import StationStatus
+from server.charging_stations import get_by_city_id
 
 
 def get_map_by_city_and_time(city_id: str, date: str, db: Session) -> Dict[str, List[dict]]:

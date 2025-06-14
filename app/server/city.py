@@ -1,7 +1,7 @@
 from sqlalchemy import func
 from sqlalchemy.orm import Session
 
-from app.models import City
+from models import City
 
 
 def get_all_cities(db: Session):  # 移除Depends

@@ -3,7 +3,7 @@ from datetime import datetime
 from sqlalchemy import func, cast, Date
 from sqlalchemy.orm import Session
 
-from app.models import StationStatus
+from models import StationStatus
 
 
 def get_by_station_id(station_id, db: Session):
