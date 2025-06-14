@@ -1,5 +1,5 @@
 from fastapi import FastAPI
-from app.middleware.error_handlers import register_error_handlers
+from middleware.error_handlers import register_error_handlers
 from database import engine, Base
 from routers import city,charging_stations,station_status,maps
 from fastapi.middleware.cors import CORSMiddleware
