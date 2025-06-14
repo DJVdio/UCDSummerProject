@@ -1,6 +1,6 @@
 from sqlalchemy import Column, String
 from geoalchemy2 import Geometry
-from app.database import Base
+from database import Base
 
 
 class City(Base):
