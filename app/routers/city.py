@@ -1,9 +1,9 @@
 from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
 
-from app.database import get_db
-from app.schemas.response import Response
-from app.server.city import get_all_cities
+from database import get_db
+from schemas.response import Response
+from server.city import get_all_cities
 
 router = APIRouter()
 
