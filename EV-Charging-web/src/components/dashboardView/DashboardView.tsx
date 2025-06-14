@@ -217,20 +217,26 @@ export default function DashboardView() {
   }, [utilisation]);
   return (
     <div className="dash-container">
-      {/* Top full‑width chart */}
-      <div className="dash-card">
-        <h3 className="dash-card-title">Grid Load vs Generation</h3>
-        <ReactECharts option={lineOption()} style={{ height: 400 }} />
+      {/*two‑column area */}
+      <div className="dash-two‑column-row">
+        <div className="dash-card">
+          <div className="dash-card-title">Grid Load vs Generation</div>
+          <ReactECharts option={lineOption()} style={{ height: 400 }} />
+        </div>
+        <div className="dash-card">
+          <div className="dash-card-title">Charging Sessions &amp; Energy Delivered</div>
+          <ReactECharts option={barOption()} style={{ height: 360 }} />
+        </div>
       </div>
 
-      {/* Bottom two‑column area */}
-      <div className="dash-bottom-row">
+      {/* two‑column area */}
+      <div className="dash-two‑column-row">
         <div className="dash-card">
-          <h3 className="dash-card-title">Charging Sessions &amp; Energy Delivered</h3>
+          <div className="dash-card-title">Charging Sessions &amp; Energy Delivered</div>
           <ReactECharts option={barOption()} style={{ height: 360 }} />
         </div>
         <div className="dash-card">
-          <h3 className="dash-card-title">Station-level Utilisation</h3>
+          <div className="dash-card-title">Station-level Utilisation</div>
           <ReactECharts option={heatOption()} style={{ height: 360 }} />
         </div>
       </div>
