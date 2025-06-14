@@ -7,7 +7,7 @@ import "./DashboardView.css"
 interface GenerationConsumptionPoint {
   time: string;
   generation: number;
-  consumption: number;
+  grid_load: number;
 }
 
 interface ChargingSessionPoint {
@@ -78,7 +78,7 @@ export default function DashboardView() {
           // console.log(d)
           time: d.time,
           generation: d.generation_kw,
-          consumption: d.gridload_kw,
+          grid_load: d.gridload_kw,
         }));
         setGenCon(arr);
       } catch (err) {
@@ -124,7 +124,7 @@ export default function DashboardView() {
         setUtilisation(matrix);
       } catch (err) {
         console.error(err);
-        setError('加载站点利用率数据失败');
+        setError('Failed to load site utilisation data');
       } finally {
         setLoading(false);
       }
@@ -134,7 +134,7 @@ export default function DashboardView() {
   const lineOption = useCallback(
     () => ({
       tooltip: { trigger: "axis" },
-      legend: { data: ["Generation", "Consumption"] },
+      legend: { data: ["Generation", "grid load"] },
       // xAxis: { type: "category", data: genCon.map((d) => d.time) },
       xAxis: {
         type: 'time',
@@ -159,7 +159,7 @@ export default function DashboardView() {
           name: 'grid load',
           type: 'line',
           smooth: true,
-          data: genCon.map(d => [new Date(d.time).getTime(), d.consumption]),
+          data: genCon.map(d => [new Date(d.time).getTime(), d.grid_load]),
         }
       ]
     }),
