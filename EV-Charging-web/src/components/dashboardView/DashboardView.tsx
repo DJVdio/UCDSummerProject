@@ -171,8 +171,8 @@ export default function DashboardView() {
         boundaryGap: false,
         axisLabel: {
           formatter: (ts: number) => {
-            const d = new Date(ts);
-            return d.toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'});
+            const date = new Date(ts);
+            return date.toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'});
           }
         }
       },
@@ -183,13 +183,13 @@ export default function DashboardView() {
           type: 'line',
           smooth: true,
           // key：把 ISO 字符串转成毫秒数
-          data: genCon.map(d => [new Date(d.time).getTime(), d.generation]),
+          data: genCon.map(data => [new Date(data.time).getTime(), data.generation]),
         },
         {
           name: 'grid load',
           type: 'line',
           smooth: true,
-          data: genCon.map(d => [new Date(d.time).getTime(), d.grid_load]),
+          data: genCon.map(data => [new Date(data.time).getTime(), data.grid_load]),
         }
       ]
     }),
@@ -199,27 +199,27 @@ export default function DashboardView() {
   const barCSCOption = useCallback(
     () => ({
       tooltip: { trigger: "axis" },
-      legend: { data: ["Sessions"] },
+      legend: { data: ["Session Counts"] },
       xAxis: {
         type: 'time',
         axisLabel: {
           formatter: (ts: number) => {
-            const d = new Date(ts);
-            return d.toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'});
+            const cscDate = new Date(ts);
+            return cscDate.toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'});
           }
         }
       },
       yAxis: [
-        { type: "value", name: "Sessions" },
+        { type: "value", name: "Session Counts" },
         // { type: "value", name: "Energy (kWh)" },
       ],
       series: [
         {
-          name:'Sessions',
+          name:'Session Counts',
           type:'bar',
           yAxisIndex:0,
           itemStyle: { color: "#9eca7f" },
-          data: sessions.map(d => [new Date(d.time).getTime(), d.sessions])
+          data: sessions.map(data => [new Date(data.time).getTime(), data.sessions])
         },
       ]
     }),
@@ -246,7 +246,7 @@ export default function DashboardView() {
           name: "Energy (kWh)",
           type: "bar",
           itemStyle: { color: "#5a6fc0" },
-          data: energy.map((d) => [Date.parse(d.time), d.energy]),
+          data: energy.map((data) => [Date.parse(data.time), data.energy]),
         },
       ],
     }),
@@ -255,11 +255,11 @@ export default function DashboardView() {
 
   const heatOption = useCallback(() => {
     const data: [number, number, number][] = [];
-    utilisation.forEach((row, s) => row.forEach((val, h) => data.push([h, s, val])));
+    utilisation.forEach((row, station) => row.forEach((val, hour) => data.push([hour, station, val])));
     return {
       tooltip: {
         position: "top",
-        formatter: (p: any) => `Station ${p.value[1]}\n${p.value[0]}:00 – ${(p.value[2] * 100).toFixed(0)}%`,
+        formatter: (params: any) => `Station ${params.value[1]}\n${params.value[0]}:00 – ${(params.value[2] * 100).toFixed(0)}%`,
       },
       xAxis: { type: "category", data: Array.from({ length: 24 }, (_, i) => `${i}:00`), splitArea: { show: true } },
       yAxis: { type: "category", data: utilisation.map((_, i) => `S${i}`), splitArea: { show: true } },
@@ -267,6 +267,7 @@ export default function DashboardView() {
       series: [{ name: "Utilisation", type: "heatmap", data, label: { show: false } }],
     };
   }, [utilisation]);
+
   return (
     <div className="dash-container">
       {/*two‑column area */}
