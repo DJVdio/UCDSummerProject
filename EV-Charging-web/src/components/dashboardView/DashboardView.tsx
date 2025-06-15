@@ -1,7 +1,7 @@
 import { useEffect, useState, useCallback } from "react";
 import ReactECharts from "echarts-for-react";
 // import {  } from "@mui/material";
-import { getGenerationGridload, getChargingSessions, getStationUtilisation } from './../../api/map';
+import { getGenerationGridload, getSessionCounts, getEnergyDelivered, getStationUtilisation } from './../../api/map';
 import "./DashboardView.css"
 
 interface GenerationConsumptionPoint {
@@ -15,7 +15,15 @@ interface ChargingSessionPoint {
   sessions: number;
   energy: number;
 }
+interface SessionPoint {
+  time: string;
+  sessions: number;
+}
 
+interface EnergyPoint {
+  time: string;
+  energy: number;
+}
 // const generateGenerationConsumptionData = (): GenerationConsumptionPoint[] => {
 //   const out: GenerationConsumptionPoint[] = [];
 //   for (let h = 0; h < 24; h++) {
@@ -62,7 +70,8 @@ export default function DashboardView() {
   // const [charging] = useState(generateChargingSessionData);
   // const [utilisation] = useState(generateUtilisationMatrix);
   const [genCon, setGenCon] = useState<GenerationConsumptionPoint[]>([]);
-  const [charging, setCharging] = useState<ChargingSessionPoint[]>([]);
+  const [sessions, setSessions] = useState<SessionPoint[]>([]);
+  const [energy, setEnergy] = useState<EnergyPoint[]>([]);
   const [utilisation, setUtilisation] = useState<number[][]>([]);
   // use for api
   const [loading, setLoading] = useState<boolean>(true);
@@ -88,26 +97,47 @@ export default function DashboardView() {
         setLoading(false);
       }
     }
-    getGenerationGridloadData();    
-    // get charging sessions
-    async function getGenAndConData() {
-      try {
-        const res = await getChargingSessions();
-        console.log(res.data, 'dash res of gene')
-        const arr = res.data.charging_sessions.data.map(d => ({
+    getGenerationGridloadData(); 
+    
+    // get charging sessions counts
+    async function getSessionCountsData() {
+      try {    
+        const res = await getSessionCounts();
+        // console.log(res, 'getSessionCounts')
+        const arr = res.data.charging_sessions.data.map((d) => ({
           time: d.time,
           sessions: d.session_count,
-          energy: d.energy_kwh,
         }));
-        setCharging(arr);
+        // console.log(arr)
+        setSessions(arr);
       } catch (err) {
-        console.error('Failed to load GenerationConsumption data', err);
-        setError('Failed to load GenerationConsumption data, please try again later.');
+        console.error('Failed to load getSessionCounts data', err);
+        setError('Failed to load getSessionCounts data, please try again later.');
       } finally {
         setLoading(false);
       }
     }
-    getGenAndConData(); 
+    getSessionCountsData()
+
+    // get Energy Delivered
+    async function getEnergyDeliveredData() {
+      try {
+        const res = await getEnergyDelivered();
+        console.log(res, 'getEnergyDeliveredData')
+        const arr = res.data.energy_delivered.data.map((d) => ({
+          time: d.time,
+          energy: d.energy_kwh,
+        }));
+        console.log(arr, 'getEnergyDeliveredData')
+        setEnergy(arr);
+      } catch (err) {
+        console.error('Failed to load EnergyDelivered data', err);
+        setError('Failed to load EnergyDelivered data, please try again later.');
+      } finally {
+        setLoading(false);
+      }
+    }
+    getEnergyDeliveredData()
 
     // get station utilisation
     async function getUtilisation() {
@@ -166,10 +196,10 @@ export default function DashboardView() {
     [genCon]
   );
 
-  const barOption = useCallback(
+  const barCSCOption = useCallback(
     () => ({
       tooltip: { trigger: "axis" },
-      legend: { data: ["Sessions", "Energy"] },
+      legend: { data: ["Sessions"] },
       xAxis: {
         type: 'time',
         axisLabel: {
@@ -181,24 +211,46 @@ export default function DashboardView() {
       },
       yAxis: [
         { type: "value", name: "Sessions" },
-        { type: "value", name: "Energy (kWh)" },
+        // { type: "value", name: "Energy (kWh)" },
       ],
       series: [
         {
           name:'Sessions',
           type:'bar',
           yAxisIndex:0,
-          data: charging.map(d => [new Date(d.time).getTime(), d.sessions])
+          itemStyle: { color: "#9eca7f" },
+          data: sessions.map(d => [new Date(d.time).getTime(), d.sessions])
         },
-        {
-          name:'Energy',
-          type:'bar',
-          yAxisIndex:1,
-          data: charging.map(d => [new Date(d.time).getTime(), d.energy])
-        }
       ]
     }),
-    [charging]
+    [sessions]
+  );
+
+    const barEDOption = useCallback(
+    () => ({
+      tooltip: { trigger: "axis" },
+      legend: { data: ["Energy (kWh)"] },
+      xAxis: {
+        type: "time",
+        axisLabel: {
+          formatter: (ts: number) =>
+            new Date(ts).toLocaleTimeString("en-GB", {
+              hour: "2-digit",
+              minute: "2-digit",
+            }),
+        },
+      },
+      yAxis: { type: "value", name: "kWh" },
+      series: [
+        {
+          name: "Energy (kWh)",
+          type: "bar",
+          itemStyle: { color: "#5a6fc0" },
+          data: energy.map((d) => [Date.parse(d.time), d.energy]),
+        },
+      ],
+    }),
+    [energy]
   );
 
   const heatOption = useCallback(() => {
@@ -224,16 +276,16 @@ export default function DashboardView() {
           <ReactECharts option={lineOption()} style={{ height: 400 }} />
         </div>
         <div className="dash-card">
-          <div className="dash-card-title">Charging Sessions &amp; Energy Delivered</div>
-          <ReactECharts option={barOption()} style={{ height: 360 }} />
+          <div className="dash-card-title">Charging Session counts</div>
+          <ReactECharts option={barCSCOption()} style={{ height: 360 }} />
         </div>
       </div>
 
       {/* two‑column area */}
       <div className="dash-two‑column-row">
         <div className="dash-card">
-          <div className="dash-card-title">Charging Sessions &amp; Energy Delivered</div>
-          <ReactECharts option={barOption()} style={{ height: 360 }} />
+          <div className="dash-card-title">Energy Delivered</div>
+          <ReactECharts option={barEDOption()} style={{ height: 360 }} />
         </div>
         <div className="dash-card">
           <div className="dash-card-title">Station-level Utilisation</div>
