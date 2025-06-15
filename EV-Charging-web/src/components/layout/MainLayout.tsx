@@ -17,7 +17,7 @@ export default function MainLayout() {
         {/* <TopBar drawerWidth={drawerWidth} /> */}
         {/* <Toolbar sx={{height: "90px"}}/> */}
 
-        <Box component="main" sx={{ overflow: "auto", flexGrow: 1 }}>
+        <Box component="main" sx={{ overflow: "visible", flexGrow: 1 }}>
           <Outlet />
         </Box>
       </Box>
