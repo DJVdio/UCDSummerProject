@@ -1,9 +1,11 @@
+
 .dash-container {
+  flex: 1;
   display: grid;
   gap: 16px;
   padding: 16px;
 }
-.dash-dash-two‑column-row-row {
+.dash-two‑column-row {
     display: grid;
     gap: 16px;
 }
