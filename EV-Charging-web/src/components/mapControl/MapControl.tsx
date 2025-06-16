@@ -154,7 +154,7 @@ export default function MapControl() {
                 },
               }}
               // minutesStep 选1 代表可以选任意分钟；如果想每5分钟一档就写 5
-              minutesStep={1}
+              minutesStep={5}
             />
           </LocalizationProvider>
         </div>
