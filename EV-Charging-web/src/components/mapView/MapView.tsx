@@ -83,12 +83,15 @@ export default function MapView() {
     setError(null);
     async function getMarkersData() {
       try {
-        const res = await getMapMarkers();
+        // const isoTime = new Date(timePoint).toISOString().slice(0, 16) + 'Z';
+        const isoTime = new Date(timePoint).toISOString().slice(0, 10);
+        const res = await getMapMarkers(currentLocationId, isoTime);
+        console.log(res, 'map.res')
         // Processing timePoint format (e.g. ‘2025-06-01 18:15’ to ISO)
         // const key = timePoint.includes(' ')
         //   ? `${timePoint.replace(' ', 'T')}:00Z`
         //   : timePoint;
-        let pts = res.data[timePoint] || [];
+        let pts = res.data[isoTime] || [];
         // console.log('pts', res.data, timePoint)
         setMarkers(pts);
       } catch (err) {
@@ -109,7 +112,7 @@ export default function MapView() {
         // 若启用自定义区域并已绘制多边形，则过滤
         // if (isCustomRegionEnabled && polygonGeoJson) {
           // TODO: 引入 turf.booleanPointInPolygon 进行空间过滤
-          // pts = pts.filter(pt => booleanPointInPolygon(L.latLng(pt.lat, pt.lng), polygonGeoJson));
+          // pts = pts.filter(pt => booleanPointInPolygon(L.latLng(pt.lat, pt.lon), polygonGeoJson));
         // }
       // const dataForDate = mockMarkersByDate[timePoint] ?? [];
       // TODO: 用 turf.booleanPointInPolygon 之类的方法筛一遍
@@ -176,7 +179,7 @@ export default function MapView() {
           />
         )} */}
         {markers.map((marker) => {
-          const { lat, lng, power_kW, popupInfo } = marker;
+          const { lat, lon, power_kW, popupInfo } = marker;
           const radius = power_kW <= 50 ? 4 : power_kW <= 150 ? 8 : 10;
 
           const statusColor =
@@ -188,8 +191,8 @@ export default function MapView() {
 
           return (
             <CircleMarker
-              key={`circle-${lat}-${lng}-${popupInfo.id}`}
-              center={[lat, lng]}
+              key={`circle-${lat}-${lon}-${popupInfo.id}`}
+              center={[lat, lon]}
               radius={radius}
               pathOptions={{
                 color: statusColor,
@@ -201,7 +204,7 @@ export default function MapView() {
         })}
         <MarkerClusterGroup>
           {markers.map((marker) => {
-            const { lat, lng, popupInfo, power_kW } = marker;
+            const { lat, lon, popupInfo, power_kW } = marker;
             // size of png 
             const iconWidth = 30;
             const iconHeight = 30;
@@ -218,8 +221,8 @@ export default function MapView() {
             });
             return (
               <Marker
-                key={`marker-${lat}-${lng}-${popupInfo.id}`}
-                position={[lat, lng]}
+                key={`marker-${lat}-${lon}-${popupInfo.id}`}
+                position={[lat, lon]}
                 icon={customIcon}
               >
                 <Popup>
@@ -251,9 +254,15 @@ export default function MapView() {
               <CloseIcon fontSize="small" />
             </IconButton>
             <div className='legend-kw'>
-              <div className='kw-detail'> &lt; 50 KW low power </div>
-              <div className='kw-detail'>50–150 kW mid-power </div>
-              <div className='kw-detail'>&gt; 150 kW high power</div>
+              <div className='kw-detail kw-detail-high'>
+                high power
+              </div>
+              <div className='kw-detail kw-detail-mid'>
+                mid power
+              </div>
+              <div className='kw-detail kw-detail-low'>
+                low power
+              </div>
             </div>
             <div className='legend-status'>
               <div className='status-detail available'>

@@ -5,7 +5,7 @@
     "2025-06-01 18:15": [
       {
         "lat": 53.355,
-        "lng": -6.266,
+        "lon": -6.266,
         "power_kW": 50,
         "connectorType": "CCS2",
         "popupInfo": {
@@ -18,7 +18,7 @@
       },
       {
         "lat": 53.354,
-        "lng": -6.264,
+        "lon": -6.264,
         "power_kW": 120,
         "connectorType": "CHAdeMO",
         "popupInfo": {
@@ -31,7 +31,7 @@
       },
       {
         "lat": 53.356,
-        "lng": -6.268,
+        "lon": -6.268,
         "power_kW": 200,
         "connectorType": "CCS2",
         "popupInfo": {
@@ -44,7 +44,7 @@
       },
       {
         "lat": 53.353,
-        "lng": -6.265,
+        "lon": -6.265,
         "power_kW": 75,
         "connectorType": "Type2",
         "popupInfo": {
