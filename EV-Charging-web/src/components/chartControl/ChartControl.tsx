@@ -99,7 +99,7 @@ export default function TimeRangeController() {
                 label="Start"
                 value={timeRange.timeStart ? new Date(timeRange.timeStart) : null}
                 onChange={onStartChange}
-                minutesStep={5}
+                minutesStep={1}
                 disableFuture
                 slotProps={{ textField: { size: 'small' } }}
               />
@@ -107,7 +107,7 @@ export default function TimeRangeController() {
                 label="End"
                 value={timeRange.timeEnd ? new Date(timeRange.timeEnd) : null}
                 onChange={onEndChange}
-                minutesStep={5}
+                minutesStep={1}
                 disableFuture
                 slotProps={{ textField: { size: 'small' } }}
               />

@@ -1,11 +1,13 @@
 import { createService } from '../utils/request';
 import type { LatLngExpression } from 'leaflet';
 
-// const BASE_URL = "http://35.205.60.141:8000"; // backend import.meta.env.BASE_URL;
-const BASE_URL = "http://localhost:5173"; // frontend
+const BASE_URL = "http://35.205.60.141:8000"; // backend import.meta.env.BASE_URL;
+const BASE_URL_MOCK = "http://localhost:5173"; // frontend
 
 // 创建 Axios 实例
 const EV = createService(BASE_URL);
+
+const EV_MOCK = createService(BASE_URL_MOCK);
 
 /**
  * get location
@@ -33,7 +35,7 @@ export const getAllCities = async (): Promise<CitiesResponse> => {
  */
 export interface EVMarker {
   lat: number;
-  lng: number;
+  lon: number;
   power_kW: number;
   connectorType: string;
   popupInfo: PopupInfo;
@@ -50,6 +52,12 @@ export interface MapResponse {
   message: string;
   data: Record<string, EVMarker[]>;
 }
+// export const getMapMarkers = async (): Promise<MapResponse> => {
+//   const { data } = await EV_MOCK.get<MapResponse>(
+//     '/map.mock.json',
+//   ); //  /map.mock.json
+//   return data;
+// }
 export const getMapMarkers = async (
   cityId: string,
   date: string
@@ -87,7 +95,7 @@ export interface GenerationConsumption {
 
 export const getGenerationGridload = async ():
   Promise<ChartResponse<GenConPayload>> => {
-  const resp = await EV.get<ChartResponse<GenConPayload>>('/lineChart.mock.json');
+  const resp = await EV_MOCK.get<ChartResponse<GenConPayload>>('/lineChart.mock.json');
   return resp.data;    // 这是 { code, message, data: GenerationConsumption }
 };
 
@@ -111,7 +119,7 @@ export interface EnergyDeliveredPayload {
 export const getSessionCounts = async (): Promise<
   ChartResponse<SessionCountsPayload>
 > => {
-  const resp = await EV.get<ChartResponse<SessionCountsPayload>>(
+  const resp = await EV_MOCK.get<ChartResponse<SessionCountsPayload>>(
     "/sessionCounts.mock.json"
   );
   return resp.data;
@@ -121,7 +129,7 @@ export const getSessionCounts = async (): Promise<
 export const getEnergyDelivered = async (): Promise<
   ChartResponse<EnergyDeliveredPayload>
 > => {
-  const resp = await EV.get<ChartResponse<EnergyDeliveredPayload>>(
+  const resp = await EV_MOCK.get<ChartResponse<EnergyDeliveredPayload>>(
     "/energyDelivered.mock.json"
   );
   return resp.data;
@@ -145,6 +153,6 @@ export interface StationRow {
 
 export const getStationUtilisation = async ():
   Promise<ChartResponse<StationUtilisation>> => {
-  const resp = await EV.get<ChartResponse<StationUtilisation>>('/heatChart.mock.json');
+  const resp = await EV_MOCK.get<ChartResponse<StationUtilisation>>('/heatChart.mock.json');
   return resp.data;
 };
