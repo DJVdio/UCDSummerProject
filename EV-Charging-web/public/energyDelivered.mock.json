@@ -2,10 +2,10 @@
   "code": 200,
   "message": "OK",
   "data": {
-    "date": "2025-06-09",
+    "date": "2025-06-01T16:15Z",
     "timezone": "Europe/Dublin",
     "energy_delivered": {
-      "units": { "sessions": "count", "energy": "kWh" },
+      "units": { "energy": "kWh" },
       "data": [
         { "time": "2025-06-09T00:00:00Z", "energy_kwh": 72 },
         { "time": "2025-06-09T01:00:00Z", "energy_kwh": 48 },

@@ -251,9 +251,15 @@ export default function MapView() {
               <CloseIcon fontSize="small" />
             </IconButton>
             <div className='legend-kw'>
-              <div className='kw-detail'> &lt; 50 KW low power </div>
-              <div className='kw-detail'>50–150 kW mid-power </div>
-              <div className='kw-detail'>&gt; 150 kW high power</div>
+              <div className='kw-detail kw-detail-high'>
+                high power
+              </div>
+              <div className='kw-detail kw-detail-mid'>
+                mid power
+              </div>
+              <div className='kw-detail kw-detail-low'>
+                low power
+              </div>
             </div>
             <div className='legend-status'>
               <div className='status-detail available'>

@@ -57,7 +57,7 @@ export const getMapMarkers = async (
   const { data } = await EV.get<MapResponse>(
     '/map/get_map_by_city_and_time',
     {
-      params: {           // 这里就是 query string
+      params: {
         city_id: cityId,
         date
       }
