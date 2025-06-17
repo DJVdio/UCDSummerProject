@@ -8,6 +8,6 @@ from server.maps import get_map_by_city_and_time
 router = APIRouter()
 
 @router.get("/get_map_by_city_and_time")
-def get_map_by_city_and_time_api(city_id, date, db: Session = Depends(get_db)):
-    station_info_list = get_map_by_city_and_time(city_id, date, db)
+def get_map_by_city_and_time_api(city_id, datetime, db: Session = Depends(get_db)):
+    station_info_list = get_map_by_city_and_time(city_id, datetime, db)
     return Response.ok(station_info_list)
