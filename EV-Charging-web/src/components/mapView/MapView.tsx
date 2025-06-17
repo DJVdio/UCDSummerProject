@@ -83,15 +83,20 @@ export default function MapView() {
     setError(null);
     async function getMarkersData() {
       try {
-        // const isoTime = new Date(timePoint).toISOString().slice(0, 16) + 'Z';
-        const isoTime = new Date(timePoint).toISOString().slice(0, 10);
-        const res = await getMapMarkers(currentLocationId, isoTime);
-        console.log(res, 'map.res')
+        const isoTime = new Date(timePoint.replace(' ', 'T'))
+          .toISOString()
+          .slice(0, 19) + 'Z';
+        // const isoTime = new Date(timePoint).toISOString().slice(0, 10);
+        // const res = await getMapMarkers(currentLocationId, isoTime);
+        // mock
+        const res = await getMapMarkers();
+        console.log(res, isoTime, res.data['map'], 'map.res')
         // Processing timePoint format (e.g. ‘2025-06-01 18:15’ to ISO)
         // const key = timePoint.includes(' ')
         //   ? `${timePoint.replace(' ', 'T')}:00Z`
         //   : timePoint;
-        let pts = res.data[isoTime] || [];
+        let pts = res.data['map'] || [];
+        console.log(pts, 'pts')
         // console.log('pts', res.data, timePoint)
         setMarkers(pts);
       } catch (err) {
