@@ -226,13 +226,13 @@ export default function MapView() {
                 icon={customIcon}
               >
                 <Popup>
-                  <div style={{ fontSize: 14, lineHeight: 1.4 }}>
-                    <strong>ID:</strong> {popupInfo.id} <br />
-                    <strong>Name:</strong> {popupInfo.name} <br />
-                    <strong>Power:</strong> {marker.power_kW} kW <br />
-                    <strong>Type:</strong> {marker.connectorType}<br />
-                    <strong>Status:</strong> {popupInfo.status} <br />
-                    <strong>Last&nbsp;Updated:</strong> {popupInfo.lastUpdated}
+                  <div className='station_content' style={{ fontSize: 14, lineHeight: 1.4 }}>
+                    <span className='popItem'>ID:</span> {popupInfo.id} <br />
+                    <span className='popItem'>Name:</span> {popupInfo.name} <br />
+                    <span className='popItem'>Power:</span> {marker.power_kW} kW <br />
+                    <span className='popItem'>Type:</span> {marker.connectorType}<br />
+                    <span className='popItem'>Status:</span> {popupInfo.status} <br />
+                    <span className='popItem'>Last&nbsp;Updated:</span> {popupInfo.lastUpdated}
                   </div>
                 </Popup>
               </Marker>
