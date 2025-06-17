@@ -2,7 +2,7 @@
   "code": 200,
   "message": "OK",
   "data": {
-    "date": "2025-06-09",
+    "date": "2025-06-01T16:15Z",
     "timezone": "Europe/Dublin",
     "generation_gridload": {
       "unit": "kW",
