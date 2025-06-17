@@ -61,7 +61,6 @@ def bulk_get_status(station_ids: List[str], parsed_datetime: datetime, db: Sessi
     else:
         query_datetime = parsed_datetime.astimezone(timezone.utc)
 
-    # 计算时间范围：查询时间点前5分钟到查询时间点
     # start_datetime = query_datetime - timedelta(minutes=15)
     end_datetime = query_datetime
 
