@@ -30,11 +30,13 @@ export default function TimeRangeController() {
   // DateTimePickers update
   const onStartChange = (date: Date | null) => {
     if (!date) return;
+    if (date && date > new Date()) return;
     dispatch(setTimeRange({ timeStart: date.toISOString(), timeEnd: timeRange.timeEnd }));
     dispatch(setTimePoint(date.toISOString()));
   };
   const onEndChange = (date: Date | null) => {
     if (!date) return;
+    if (date && date > new Date()) return;
     dispatch(setTimeRange({ timeStart: timeRange.timeStart, timeEnd: date.toISOString() }));
   };
 

@@ -1,13 +1,14 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { FormControl, InputLabel, Select, MenuItem, FormControlLabel, Switch } from '@mui/material';
 import {
   LocalizationProvider, 
   DateTimePicker,
+  TimeView,
 } from '@mui/x-date-pickers';
 import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
-import { useAppDispatch, useAppSelector } from '../../hooks';
-import { setTimePoint } from '../../store/timeSlice';
-import { fetchCities, setLocation, setCustomRegionEnabled } from '../../store/mapSlice';
+import { useAppDispatch, useAppSelector } from './../../hooks';
+import { setTimePoint } from './../../store/timeSlice';
+import { fetchCities, setLocation, setCustomRegionEnabled } from './../../store/mapSlice';
 import './MapControl.css'
 
 export default function MapControl() {
@@ -17,6 +18,11 @@ export default function MapControl() {
   const { timePoint } = useAppSelector(s => s.time);
   // console.log(locations, currentLocationId, currentTime);
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
+  // const nowTime = useRef(new Date()); // now time
+  // useEffect(() => {
+  //   const id = setInterval(() => (nowTime.current = new Date()), 60_000);
+  //   return () => clearInterval(id);
+  // }, []);
 
   // users could choose geographic location
   const clickCustomRegionToggle = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -60,6 +66,7 @@ export default function MapControl() {
   // select date
   const handleDateChange = (date: Date | null) => {
     if (!date || isNaN(date.getTime())) return;
+    if (date && date > new Date()) return;
     setSelectedDate(date);
 
     // Convert the Date to the string format required by the backend.
@@ -141,6 +148,8 @@ export default function MapControl() {
               value={selectedDate}
               onChange={handleDateChange}
               disableFuture
+              // maxDateTime={nowTime.current}   
+              closeOnSelect
               slotProps={{
                 textField: {
                   size: 'small',
