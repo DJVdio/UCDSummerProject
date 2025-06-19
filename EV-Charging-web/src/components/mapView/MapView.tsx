@@ -85,17 +85,18 @@ export default function MapView() {
       try {
         const isoTime = new Date(timePoint.replace(' ', 'T'))
           .toISOString()
-          .slice(0, 19) + 'Z';
+          .slice(0, 10);
+          // .slice(0, 19) + 'Z';
         // const isoTime = new Date(timePoint).toISOString().slice(0, 10);
-        // const res = await getMapMarkers(currentLocationId, isoTime);
+        const res = await getMapMarkers(currentLocationId, isoTime);
         // mock
-        const res = await getMapMarkers();
-        console.log(res, isoTime, res.data['map'], 'map.res')
+        // const res = await getMapMarkers();
+        console.log(res, isoTime, res.data, 'map.res')
         // Processing timePoint format (e.g. ‘2025-06-01 18:15’ to ISO)
         // const key = timePoint.includes(' ')
         //   ? `${timePoint.replace(' ', 'T')}:00Z`
         //   : timePoint;
-        let pts = res.data['map'] || [];
+        let pts = res.data[isoTime] || [];
         console.log(pts, 'pts')
         // console.log('pts', res.data, timePoint)
         setMarkers(pts);
@@ -188,10 +189,14 @@ export default function MapView() {
           const radius = power_kW <= 50 ? 4 : power_kW <= 150 ? 8 : 10;
 
           const statusColor =
-            popupInfo.status === 'available'
-              ? '#00FF00'
-              : popupInfo.status === 'occupied'
-              ? '#FF4500'
+            popupInfo.status === 'AVAILABLE'
+              ? '#059669'
+              : popupInfo.status === 'CHARGING'
+              ? '#FB8C00'    
+              : popupInfo.status === 'PAUSED'
+              ? '#475569'
+              : popupInfo.status === 'OCCUPIED'
+              ? '#B91C1C'
               : '#000000';
 
           return (
@@ -274,13 +279,17 @@ export default function MapView() {
                 <span className='status-icon'></span>
                 <span className='status-text'>Available</span>
               </div>
-              <div className='status-detail occupied'>              
+              <div className='status-detail charging'>              
                 <span className='status-icon'></span>
-                <span className='status-text'>Occupied</span>
+                <span className='status-text'>Charging</span>
               </div>
-              <div className='status-detail offline'>
+              <div className='status-detail paused'>
                 <span className='status-icon'></span>
-                <span className='status-text'>Offline</span>
+                <span className='status-text'>Paused</span>
+              </div>
+              <div className='status-detail occpuied'>
+                <span className='status-icon'></span>
+                <span className='status-text'>Occpuied</span>
               </div>
             </div>
           </div>

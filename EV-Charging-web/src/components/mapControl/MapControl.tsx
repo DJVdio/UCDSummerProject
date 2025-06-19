@@ -18,11 +18,6 @@ export default function MapControl() {
   const { timePoint } = useAppSelector(s => s.time);
   // console.log(locations, currentLocationId, currentTime);
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
-  // const nowTime = useRef(new Date()); // now time
-  // useEffect(() => {
-  //   const id = setInterval(() => (nowTime.current = new Date()), 60_000);
-  //   return () => clearInterval(id);
-  // }, []);
 
   // users could choose geographic location
   const clickCustomRegionToggle = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -148,7 +143,6 @@ export default function MapControl() {
               value={selectedDate}
               onChange={handleDateChange}
               disableFuture
-              // maxDateTime={nowTime.current}   
               closeOnSelect
               slotProps={{
                 textField: {
@@ -162,7 +156,6 @@ export default function MapControl() {
                   },
                 },
               }}
-              // minutesStep 选1 代表可以选任意分钟；如果想每5分钟一档就写 5
               minutesStep={1}
             />
           </LocalizationProvider>

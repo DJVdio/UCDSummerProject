@@ -25,14 +25,14 @@ export interface CitiesResponse {
   message: string;
   data: CityApiItem[];
 }
-// export const getAllCities = async (): Promise<CitiesResponse> => {
-//   const response = await EV.get<CitiesResponse>('/cities/all'); // backend: '/cities/all' // /cities.mock.json
-//   return response.data;
-// };
 export const getAllCities = async (): Promise<CitiesResponse> => {
-  const response = await EV_MOCK.get<CitiesResponse>('/cities.mock.json'); // backend: '/cities/all' // /cities.mock.json
+  const response = await EV.get<CitiesResponse>('/cities/all'); // backend: '/cities/all' // /cities.mock.json
   return response.data;
 };
+// export const getAllCities = async (): Promise<CitiesResponse> => {
+//   const response = await EV_MOCK.get<CitiesResponse>('/cities.mock.json'); // backend: '/cities/all' // /cities.mock.json
+//   return response.data;
+// };
 
 /**
  * get charging stations
@@ -56,27 +56,27 @@ export interface MapResponse {
   message: string;
   data: Record<string, EVMarker[]>;
 }
-export const getMapMarkers = async (): Promise<MapResponse> => {
-  const { data } = await EV_MOCK.get<MapResponse>(
-    '/map.mock.json',
-  ); //  /map.mock.json
-  return data;
-}
-// export const getMapMarkers = async (
-//   cityId: string,
-//   date: string
-// ): Promise<MapResponse> => {
-//   const { data } = await EV.get<MapResponse>(
-//     '/map/get_map_by_city_and_time',
-//     {
-//       params: {
-//         city_id: cityId,
-//         date
-//       }
-//     }
+// export const getMapMarkers = async (): Promise<MapResponse> => {
+//   const { data } = await EV_MOCK.get<MapResponse>(
+//     '/map.mock.json',
 //   ); //  /map.mock.json
 //   return data;
 // }
+export const getMapMarkers = async (
+  cityId: string,
+  date: string
+): Promise<MapResponse> => {
+  const { data } = await EV.get<MapResponse>(
+    '/map/get_map_by_city_and_time',
+    {
+      params: {
+        city_id: cityId,
+        date
+      }
+    }
+  ); //  /map.mock.json
+  return data;
+}
 
 /**
  * get chart data
