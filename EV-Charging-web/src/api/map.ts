@@ -64,14 +64,14 @@ export interface MapResponse {
 // }
 export const getMapMarkers = async (
   cityId: string,
-  date: string
+  datetime: string
 ): Promise<MapResponse> => {
   const { data } = await EV.get<MapResponse>(
     '/map/get_map_by_city_and_time',
     {
       params: {
         city_id: cityId,
-        date
+        datetime
       }
     }
   ); //  /map.mock.json

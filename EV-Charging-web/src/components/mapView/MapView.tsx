@@ -85,8 +85,8 @@ export default function MapView() {
       try {
         const isoTime = new Date(timePoint.replace(' ', 'T'))
           .toISOString()
-          .slice(0, 10);
-          // .slice(0, 19) + 'Z';
+          // .slice(0, 10);
+          .slice(0, 19) + 'Z';
         // const isoTime = new Date(timePoint).toISOString().slice(0, 10);
         const res = await getMapMarkers(currentLocationId, isoTime);
         // mock
