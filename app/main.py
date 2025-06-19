@@ -1,7 +1,7 @@
 from fastapi import FastAPI
 from middleware.error_handlers import register_error_handlers
 from database import engine, Base
-from routers import city,charging_stations,station_status,maps
+from routers import city, charging_stations, station_status, maps, graph
 from fastapi.middleware.cors import CORSMiddleware
 
 Base.metadata.create_all(bind=engine)
@@ -13,6 +13,7 @@ ROUTERS = [
     (charging_stations.router, "/charging_stations", ["charging_stations"]),
     (station_status.router,   "/station_status",   ["station_status"]),
     (maps.router,   "/map",   ["map"]),
+    (graph.router,   "/graph",   ["graph"]),
 ]
 for router, prefix, tags in ROUTERS:
     app.include_router(router, prefix=prefix, tags=tags)

@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
 
 from database import get_db
-from schemas.response import Response
+from util.response import Response
 from server.maps import get_map_by_city_and_time
 
 router = APIRouter()

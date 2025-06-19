@@ -30,6 +30,7 @@ def get_map_by_city_and_time(city_id: str, datetime_str: str, db: Session) -> Di
                 "id": station.station_id,
                 "name": station.name,
                 "description": station.description,
+                "type": station.connector_type,
                 "status": None,
                 "lastUpdated": None
             }
