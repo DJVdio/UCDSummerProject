@@ -68,7 +68,7 @@ def bulk_get_status(station_ids: List[str], parsed_datetime: datetime, db: Sessi
     subquery = (
         db.query(
             StationStatus.station_id,
-            func.max(StationStatus.timestamp).label('max_timestamp')
+            func.max(StationStatus.last_updated).label('latest')
         )
         .filter(
             StationStatus.station_id.in_(station_ids),
@@ -86,7 +86,7 @@ def bulk_get_status(station_ids: List[str], parsed_datetime: datetime, db: Sessi
             subquery,
             and_(
                 StationStatus.station_id == subquery.c.station_id,
-                StationStatus.timestamp == subquery.c.max_timestamp
+                StationStatus.last_updated == subquery.c.latest
             )
         )
         .all()
