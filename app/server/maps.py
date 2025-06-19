@@ -1,11 +1,12 @@
-from datetime import datetime, timedelta, timezone
+from datetime import datetime, timezone
 from typing import Dict, List
-from sqlalchemy.orm import Session
+
 from sqlalchemy import and_, func
-import re
+from sqlalchemy.orm import Session
 
 from models import StationStatus
 from server.charging_stations import get_by_city_id
+from util.time_process import parse_datetime
 
 
 def get_map_by_city_and_time(city_id: str, datetime_str: str, db: Session) -> Dict[str, List[dict]]:
@@ -95,37 +96,3 @@ def bulk_get_status(station_ids: List[str], parsed_datetime: datetime, db: Sessi
     return {status.station_id: status for status in results}
 
 
-def parse_datetime(datetime_str: str) -> datetime:
-    # 尝试直接解析
-    try:
-        return datetime.fromisoformat(datetime_str)
-    except ValueError:
-        pass
-
-    # 处理常见的变体格式
-    patterns = [
-        (r"(\d{4}-\d{2}-\d{2}T\d{2}:\d{2})Z$", "%Y-%m-%dT%H:%M"),  # 2025-06-10T17:26Z
-        (r"(\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2})Z$", "%Y-%m-%dT%H:%M:%S"),  # 2025-06-10T17:26:45Z
-        (r"(\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2})$", "%Y-%m-%d %H:%M:%S"),  # 2025-06-10 17:26:45
-    ]
-
-    for pattern, fmt in patterns:
-        match = re.match(pattern, datetime_str)
-        if match:
-            try:
-                return datetime.strptime(match.group(1), fmt)
-            except ValueError:
-                continue
-
-    # 处理带时区偏移的格式
-    tz_pattern = r"(\d{4}-\d{2}-\d{2}T\d{2}:\d{2}(?::\d{2})?)([+-]\d{2}:\d{2})$"
-    match = re.match(tz_pattern, datetime_str)
-    if match:
-        try:
-            dt = datetime.fromisoformat(match.group(1) + match.group(2))
-            return dt
-        except ValueError:
-            pass
-
-    # 如果所有尝试都失败
-    raise ValueError(f"Unsupported datetime format: {datetime_str}")
