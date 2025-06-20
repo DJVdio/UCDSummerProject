@@ -191,13 +191,9 @@ export default function MapView() {
           const statusColor =
             popupInfo.status === 'AVAILABLE'
               ? '#059669'
-              : popupInfo.status === 'CHARGING'
-              ? '#FB8C00'    
-              : popupInfo.status === 'PAUSED'
-              ? '#475569'
               : popupInfo.status === 'OCCUPIED'
               ? '#B91C1C'
-              : '#000000';
+              : '#475569';
 
           return (
             <CircleMarker
@@ -280,17 +276,21 @@ export default function MapView() {
                 <span className='status-icon'></span>
                 <span className='status-text'>Available</span>
               </div>
-              <div className='status-detail charging'>              
+              {/* <div className='status-detail charging'>              
                 <span className='status-icon'></span>
                 <span className='status-text'>Charging</span>
               </div>
               <div className='status-detail paused'>
                 <span className='status-icon'></span>
                 <span className='status-text'>Paused</span>
-              </div>
+              </div> */}
               <div className='status-detail occpuied'>
                 <span className='status-icon'></span>
                 <span className='status-text'>Occpuied</span>
+              </div>
+              <div className='status-detail offline'>
+                <span className='status-icon'></span>
+                <span className='status-text'>Offline</span>
               </div>
             </div>
           </div>

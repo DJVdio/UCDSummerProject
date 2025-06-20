@@ -105,11 +105,14 @@
   background-color: #059669;
 }
 
-.charging .status-icon {
+/* .charging .status-icon {
   background-color: #FB8C00;
 }
 
 .paused .status-icon {
+  background-color: #475569;
+} */
+.offline .status-icon {
   background-color: #475569;
 }
 .occpuied .status-icon {

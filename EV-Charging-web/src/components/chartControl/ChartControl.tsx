@@ -23,10 +23,6 @@ export default function TimeRangeController() {
     dispatch(setLocation(locId));
   };
 
-  // useEffect(() => {
-  //   console.log(locations, 'locations')
-  // }, [locations]);
-
   useEffect(() => {
     dispatch(fetchCities());
   }, [dispatch]);
@@ -60,15 +56,6 @@ export default function TimeRangeController() {
       )
     }
   }, [timeRange.timeStart, timeRange.timeEnd, dispatch]);
-  // Slider（假设最多查 30 天，可把刻度映射到时间戳）
-  // const onSliderChange = (_: any, [startTs, endTs]: number[]) => {
-  //   dispatch(
-  //     setTimeRange({
-  //       timeStart: new Date(startTs).toISOString(),
-  //       timeEnd: new Date(endTs).toISOString(),
-  //     }),
-  //   );
-  // };
 
   return (
     <div className='control-wrapper'>
@@ -140,20 +127,6 @@ export default function TimeRangeController() {
                 }}
               />
             </Box>
-
-            {/* 可选：一个直观的范围滑块 */}
-            {/* <Slider
-              sx={{ mt: 3 }}
-              value={[
-                timeRange.timeStart ? Date.parse(timeRange.timeStart) : 0,
-                timeRange.timeEnd ? Date.parse(timeRange.timeEnd) : 0,
-              ]}
-              min={Date.parse('2025-06-01T00:00')}
-              max={Date.parse('2025-06-08T23:59')}
-              step={5 * 60 * 1000} // 5 min
-              onChange={onSliderChange}
-              valueLabelDisplay="off"
-            /> */}
           </LocalizationProvider>
         </div>
       </div>

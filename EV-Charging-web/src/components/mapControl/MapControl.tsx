@@ -34,10 +34,6 @@ export default function MapControl() {
     dispatch(setLocation(locId));
   };
 
-  // useEffect(() => {
-  //   console.log(locations, 'locations')
-  // }, [locations]);
-
   useEffect(() => {
     dispatch(fetchCities());
   }, [dispatch]);
@@ -160,10 +156,6 @@ export default function MapControl() {
                   variant: 'outlined',
                   error: isInvalid,
                   helperText: isInvalid ? `Only ${MIN_ALLOWED} are allowed` : '',
-                  // inputProps: {
-                  //   /* HTML input-level guard: day must be 20–31 */
-                  //   pattern: `^.*(0?${MIN_DAY}|2[1-9]|3[0-1]).*$`,
-                  // },
                   style: {
                     padding: '6px 8px',
                     fontSize: '0.875rem',
