@@ -56,6 +56,7 @@ export interface MapResponse {
   message: string;
   data: Record<string, EVMarker[]>;
 }
+// mock request
 // export const getMapMarkers = async (): Promise<MapResponse> => {
 //   const { data } = await EV_MOCK.get<MapResponse>(
 //     '/map.mock.json',

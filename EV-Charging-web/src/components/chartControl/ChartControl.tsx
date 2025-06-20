@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { DateTimePicker, LocalizationProvider } from '@mui/x-date-pickers';
+import { DateTimePicker, LocalizationProvider, DateTimeValidationError } from '@mui/x-date-pickers';
 import { FormControl, InputLabel, Select, MenuItem } from '@mui/material';
 import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
 import { Box } from '@mui/material';
@@ -8,36 +8,42 @@ import { setTimeRange, setTimePoint } from './../../store/timeSlice';
 import { fetchCities, setLocation } from '../../store/mapSlice';
 import "./ChartControl.css"
 
+const MIN_ALLOWED = new Date(2025, 5, 20, 0, 0, 0, 0);
+const isBeforeDay = (date: Date) => date < MIN_ALLOWED;
+
 export default function TimeRangeController() {
   const dispatch = useAppDispatch();
   const { timeRange, timePoint } = useAppSelector(s => s.time);
   const { locations, currentLocationId, isCustomRegionEnabled } =
     useAppSelector(s => s.map);
+  const [isInvalid, setIsInvalid] = useState(false);
 
   // select city
   const handleLocationChange = (locId: string) => {
     dispatch(setLocation(locId));
   };
 
-  useEffect(() => {
-    console.log(locations, 'locations')
-  }, [locations]);
+  // useEffect(() => {
+  //   console.log(locations, 'locations')
+  // }, [locations]);
 
   useEffect(() => {
     dispatch(fetchCities());
   }, [dispatch]);
 
   // DateTimePickers update
-  const onStartChange = (date: Date | null) => {
-    if (!date) return;
-    if (date && date > new Date()) return;
-    dispatch(setTimeRange({ timeStart: date.toISOString(), timeEnd: timeRange.timeEnd }));
-    dispatch(setTimePoint(date.toISOString()));
+  const onStartChange = (newValue: Date | null) => {
+    if (!newValue) return;
+    if (newValue && newValue > new Date()) return;
+    if (newValue < MIN_ALLOWED) return;
+    dispatch(setTimeRange({ timeStart: newValue.toISOString(), timeEnd: timeRange.timeEnd }));
+    dispatch(setTimePoint(newValue.toISOString()));
   };
-  const onEndChange = (date: Date | null) => {
-    if (!date) return;
-    if (date && date > new Date()) return;
-    dispatch(setTimeRange({ timeStart: timeRange.timeStart, timeEnd: date.toISOString() }));
+  const onEndChange = (newValue: Date | null) => {
+    if (!newValue) return;
+    if (newValue && newValue > new Date()) return;
+    if (newValue < MIN_ALLOWED) return;
+    dispatch(setTimeRange({ timeStart: timeRange.timeStart, timeEnd: newValue.toISOString() }));
   };
 
   useEffect(() => {
@@ -103,7 +109,17 @@ export default function TimeRangeController() {
                 onChange={onStartChange}
                 minutesStep={1}
                 disableFuture
-                slotProps={{ textField: { size: 'small' } }}
+                shouldDisableDate={isBeforeDay}
+                onError={(reason: DateTimeValidationError | null) =>
+                  setIsInvalid(reason === 'shouldDisableDate')
+                }
+                slotProps={{ 
+                  textField: { 
+                    size: 'small',
+                    error: isInvalid,
+                    helperText: isInvalid ? `Only ${MIN_ALLOWED} are allowed` : '',
+                  } 
+                }}
               />
               <DateTimePicker
                 label="End"
@@ -111,7 +127,17 @@ export default function TimeRangeController() {
                 onChange={onEndChange}
                 minutesStep={1}
                 disableFuture
-                slotProps={{ textField: { size: 'small' } }}
+                shouldDisableDate={isBeforeDay}
+                onError={(reason: DateTimeValidationError | null) =>
+                  setIsInvalid(reason === 'shouldDisableDate')
+                }
+                slotProps={{ 
+                  textField: { 
+                    size: 'small',
+                    error: isInvalid,
+                    helperText: isInvalid ? `Only ${MIN_ALLOWED} are allowed` : '',
+                  } 
+                }}
               />
             </Box>
 

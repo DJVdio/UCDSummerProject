@@ -3,13 +3,16 @@ import { FormControl, InputLabel, Select, MenuItem, FormControlLabel, Switch } f
 import {
   LocalizationProvider, 
   DateTimePicker,
-  TimeView,
+  DateTimeValidationError,
 } from '@mui/x-date-pickers';
 import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
 import { useAppDispatch, useAppSelector } from './../../hooks';
 import { setTimePoint } from './../../store/timeSlice';
 import { fetchCities, setLocation, setCustomRegionEnabled } from './../../store/mapSlice';
 import './MapControl.css'
+
+const MIN_ALLOWED = new Date(2025, 5, 20, 0, 0, 0, 0);
+const isBeforeDay = (date: Date) => date < MIN_ALLOWED;
 
 export default function MapControl() {
   const dispatch = useAppDispatch();
@@ -18,6 +21,8 @@ export default function MapControl() {
   const { timePoint } = useAppSelector(s => s.time);
   // console.log(locations, currentLocationId, currentTime);
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
+  // date invalid
+  const [isInvalid, setIsInvalid] = useState(false);
 
   // users could choose geographic location
   const clickCustomRegionToggle = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -29,9 +34,9 @@ export default function MapControl() {
     dispatch(setLocation(locId));
   };
 
-  useEffect(() => {
-    console.log(locations, 'locations')
-  }, [locations]);
+  // useEffect(() => {
+  //   console.log(locations, 'locations')
+  // }, [locations]);
 
   useEffect(() => {
     dispatch(fetchCities());
@@ -59,18 +64,19 @@ export default function MapControl() {
   }, [timePoint]);
 
   // select date
-  const handleDateChange = (date: Date | null) => {
-    if (!date || isNaN(date.getTime())) return;
-    if (date && date > new Date()) return;
-    setSelectedDate(date);
+  const handleDateChange = (newValue: Date | null) => {
+    if (!newValue || isNaN(newValue.getTime())) return;
+    if (newValue && newValue > new Date()) return;
+    if (newValue < MIN_ALLOWED) return;
+    setSelectedDate(newValue);
 
     // Convert the Date to the string format required by the backend.
     // Assume that the backend requires ‘YYYY-MM-DD’; if need hours, minutes, and seconds, use date.toISOString().
-    const year = date.getFullYear();
-    const month = String(date.getMonth() + 1).padStart(2, '0');
-    const day = String(date.getDate()).padStart(2, '0');
-    const hours = String(date.getHours()).padStart(2, '0');
-    const minutes = String(date.getMinutes()).padStart(2, '0');
+    const year = newValue.getFullYear();
+    const month = String(newValue.getMonth() + 1).padStart(2, '0');
+    const day = String(newValue.getDate()).padStart(2, '0');
+    const hours = String(newValue.getHours()).padStart(2, '0');
+    const minutes = String(newValue.getMinutes()).padStart(2, '0');
     const dateString = `${year}-${month}-${day} ${hours}:${minutes}`;
 
     // dispatch to Redux
@@ -144,10 +150,20 @@ export default function MapControl() {
               onChange={handleDateChange}
               disableFuture
               closeOnSelect
+              shouldDisableDate={isBeforeDay}
+              onError={(reason: DateTimeValidationError | null) =>
+                setIsInvalid(reason === 'shouldDisableDate')
+              }
               slotProps={{
                 textField: {
                   size: 'small',
                   variant: 'outlined',
+                  error: isInvalid,
+                  helperText: isInvalid ? `Only ${MIN_ALLOWED} are allowed` : '',
+                  // inputProps: {
+                  //   /* HTML input-level guard: day must be 20–31 */
+                  //   pattern: `^.*(0?${MIN_DAY}|2[1-9]|3[0-1]).*$`,
+                  // },
                   style: {
                     padding: '6px 8px',
                     fontSize: '0.875rem',

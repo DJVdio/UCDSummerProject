@@ -254,6 +254,7 @@ export default function MapView() {
       <div className='legend-content'>
         <Fade
           in={isLegendOpen}
+          unmountOnExit
         >
           <div className='legend-card'>
             <IconButton
