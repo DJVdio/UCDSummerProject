@@ -102,15 +102,21 @@
   flex-shrink: 0;
 }
 .available .status-icon {
-  background-color: #00FF00;
+  background-color: #059669;
 }
 
-.occupied .status-icon {
-  background-color: #FF4500;
+/* .charging .status-icon {
+  background-color: #FB8C00;
 }
 
+.paused .status-icon {
+  background-color: #475569;
+} */
 .offline .status-icon {
-  background-color: #000000;
+  background-color: #475569;
+}
+.occpuied .status-icon {
+  background-color: #B91C1C;
 }
 
 .status-text {
@@ -130,3 +136,4 @@
     gap: 16px;
   }
 }
+

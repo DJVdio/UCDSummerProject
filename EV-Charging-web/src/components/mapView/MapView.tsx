@@ -83,15 +83,21 @@ export default function MapView() {
     setError(null);
     async function getMarkersData() {
       try {
-        // const isoTime = new Date(timePoint).toISOString().slice(0, 16) + 'Z';
-        const isoTime = new Date(timePoint).toISOString().slice(0, 10);
+        const isoTime = new Date(timePoint.replace(' ', 'T'))
+          .toISOString()
+          // .slice(0, 10);
+          .slice(0, 19) + 'Z';
+        // const isoTime = new Date(timePoint).toISOString().slice(0, 10);
         const res = await getMapMarkers(currentLocationId, isoTime);
-        console.log(res, 'map.res')
+        // mock
+        // const res = await getMapMarkers();
+        console.log(res, isoTime, res.data, 'map.res')
         // Processing timePoint format (e.g. ‘2025-06-01 18:15’ to ISO)
         // const key = timePoint.includes(' ')
         //   ? `${timePoint.replace(' ', 'T')}:00Z`
         //   : timePoint;
         let pts = res.data[isoTime] || [];
+        console.log(pts, 'pts')
         // console.log('pts', res.data, timePoint)
         setMarkers(pts);
       } catch (err) {
@@ -183,11 +189,11 @@ export default function MapView() {
           const radius = power_kW <= 50 ? 4 : power_kW <= 150 ? 8 : 10;
 
           const statusColor =
-            popupInfo.status === 'available'
-              ? '#00FF00'
-              : popupInfo.status === 'occupied'
-              ? '#FF4500'
-              : '#000000';
+            popupInfo.status === 'AVAILABLE'
+              ? '#059669'
+              : popupInfo.status === 'OCCUPIED'
+              ? '#B91C1C'
+              : '#475569';
 
           return (
             <CircleMarker
@@ -244,6 +250,7 @@ export default function MapView() {
       <div className='legend-content'>
         <Fade
           in={isLegendOpen}
+          unmountOnExit
         >
           <div className='legend-card'>
             <IconButton
@@ -269,9 +276,17 @@ export default function MapView() {
                 <span className='status-icon'></span>
                 <span className='status-text'>Available</span>
               </div>
-              <div className='status-detail occupied'>              
+              {/* <div className='status-detail charging'>              
                 <span className='status-icon'></span>
-                <span className='status-text'>Occupied</span>
+                <span className='status-text'>Charging</span>
+              </div>
+              <div className='status-detail paused'>
+                <span className='status-icon'></span>
+                <span className='status-text'>Paused</span>
+              </div> */}
+              <div className='status-detail occpuied'>
+                <span className='status-icon'></span>
+                <span className='status-text'>Occpuied</span>
               </div>
               <div className='status-detail offline'>
                 <span className='status-icon'></span>
