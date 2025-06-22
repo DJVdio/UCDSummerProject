@@ -113,9 +113,9 @@ export default function DashboardView() {
         // const isoTime = new Date(timePoint).toISOString().slice(0, 10);  
         const res = await getSessionCounts(currentLocationId, isoTime);
         // console.log(res, 'getSessionCounts')
-        const arr = res.data.charging_sessions.data.map((d) => ({
-          time: d.time,
-          sessions: d.session_count,
+        const arr = res.data.charging_sessions.data.map((data) => ({
+          time: data.time,
+          sessions: data.sessioncounts,
         }));
         // console.log(arr)
         setSessions(arr);
@@ -283,25 +283,25 @@ export default function DashboardView() {
       {/*two‑column area */}
       <div className="dash-two‑column-row">
         <div className="dash-card">
-          <div className="dash-card-title">Grid Load vs Generation</div>
-          <ReactECharts option={lineOption()} style={{ height: 400 }} />
-        </div>
-        <div className="dash-card">
           <div className="dash-card-title">Charging Session counts</div>
           <ReactECharts option={barCSCOption()} style={{ height: 360 }} />
         </div>
+        {/* <div className="dash-card">
+          <div className="dash-card-title">Grid Load vs Generation</div>
+          <ReactECharts option={lineOption()} style={{ height: 400 }} />
+        </div> */}
       </div>
 
       {/* two‑column area */}
       <div className="dash-two‑column-row">
-        <div className="dash-card">
+        {/* <div className="dash-card">
           <div className="dash-card-title">Energy Delivered</div>
           <ReactECharts option={barEDOption()} style={{ height: 360 }} />
         </div>
         <div className="dash-card">
           <div className="dash-card-title">Station-level Utilisation</div>
           <ReactECharts option={heatOption()} style={{ height: 360 }} />
-        </div>
+        </div> */}
       </div>
     </div>
   );
