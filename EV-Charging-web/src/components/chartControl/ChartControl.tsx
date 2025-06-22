@@ -4,12 +4,16 @@ import { FormControl, InputLabel, Select, MenuItem } from '@mui/material';
 import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
 import { Box } from '@mui/material';
 import { useAppDispatch, useAppSelector } from '../../hooks';
-import { setTimeRange, setTimePoint } from './../../store/timeSlice';
+import { setTimePoint } from './../../store/timeSlice';
 import { fetchCities, setLocation } from '../../store/mapSlice';
 import "./ChartControl.css"
 
-const MIN_ALLOWED = new Date(2025, 5, 20, 0, 0, 0, 0);
-const isBeforeDay = (date: Date) => date < MIN_ALLOWED;
+const DAY_MS = 86_400_000;
+const MIN_ALLOWED_END = new Date(2025, 5, 20, 0, 0, 0, 0);
+const isBeforeDayEnd = (date: Date) => date < MIN_ALLOWED_END;
+
+const MIN_ALLOWED_START = new Date(2025, 5, 19, 0, 0, 0, 0);
+const isBeforeDayStart = (date: Date) => date < MIN_ALLOWED_START;
 
 export default function TimeRangeController() {
   const dispatch = useAppDispatch();
@@ -31,31 +35,32 @@ export default function TimeRangeController() {
   const onStartChange = (newValue: Date | null) => {
     if (!newValue) return;
     if (newValue && newValue > new Date()) return;
-    if (newValue < MIN_ALLOWED) return;
-    dispatch(setTimeRange({ timeStart: newValue.toISOString(), timeEnd: timeRange.timeEnd }));
-    dispatch(setTimePoint(newValue.toISOString()));
+    if (newValue < MIN_ALLOWED_START) return;
+    const newEnd = new Date(newValue.getTime() + DAY_MS);
+    dispatch(setTimePoint(newEnd.toISOString()));
   };
   const onEndChange = (newValue: Date | null) => {
     if (!newValue) return;
     if (newValue && newValue > new Date()) return;
-    if (newValue < MIN_ALLOWED) return;
-    dispatch(setTimeRange({ timeStart: timeRange.timeStart, timeEnd: newValue.toISOString() }));
+    if (newValue < MIN_ALLOWED_END) return;
+    dispatch(setTimePoint(newValue.toISOString()));
   };
 
-  useEffect(() => {
-    if (!timeRange.timeStart || !timeRange.timeEnd) {
-      console.log('is there time?')
-      const nowTime = new Date();
-      const oneDayAgo = new Date(nowTime.getTime() - 24 * 60 * 60 * 1000);
-      console.log(nowTime)
-      dispatch(
-        setTimeRange({
-          timeStart: oneDayAgo.toISOString(),
-          timeEnd: nowTime.toISOString(),
-        })
-      )
-    }
-  }, [timeRange.timeStart, timeRange.timeEnd, dispatch]);
+  // default 24 hours
+  // useEffect(() => {
+  //   if (!timeRange.timeStart || !timeRange.timeEnd) {
+  //     console.log('is there time?')
+  //     const nowTime = new Date();
+  //     const oneDayAgo = new Date(nowTime.getTime() - 24 * 60 * 60 * 1000);
+  //     console.log(nowTime)
+  //     dispatch(
+  //       setTimeRange({
+  //         timeStart: oneDayAgo.toISOString(),
+  //         timeEnd: nowTime.toISOString(),
+  //       })
+  //     )
+  //   }
+  // }, [timeRange.timeStart, timeRange.timeEnd, dispatch]);
 
   return (
     <div className='control-wrapper'>
@@ -96,7 +101,7 @@ export default function TimeRangeController() {
                 onChange={onStartChange}
                 minutesStep={1}
                 disableFuture
-                shouldDisableDate={isBeforeDay}
+                shouldDisableDate={isBeforeDayStart}
                 onError={(reason: DateTimeValidationError | null) =>
                   setIsInvalid(reason === 'shouldDisableDate')
                 }
@@ -104,7 +109,7 @@ export default function TimeRangeController() {
                   textField: { 
                     size: 'small',
                     error: isInvalid,
-                    helperText: isInvalid ? `Only ${MIN_ALLOWED} are allowed` : '',
+                    helperText: isInvalid ? `Only ${MIN_ALLOWED_START} are allowed` : '',
                   } 
                 }}
               />
@@ -114,7 +119,7 @@ export default function TimeRangeController() {
                 onChange={onEndChange}
                 minutesStep={1}
                 disableFuture
-                shouldDisableDate={isBeforeDay}
+                shouldDisableDate={isBeforeDayEnd}
                 onError={(reason: DateTimeValidationError | null) =>
                   setIsInvalid(reason === 'shouldDisableDate')
                 }
@@ -122,7 +127,7 @@ export default function TimeRangeController() {
                   textField: { 
                     size: 'small',
                     error: isInvalid,
-                    helperText: isInvalid ? `Only ${MIN_ALLOWED} are allowed` : '',
+                    helperText: isInvalid ? `Only ${MIN_ALLOWED_END} are allowed` : '',
                   } 
                 }}
               />

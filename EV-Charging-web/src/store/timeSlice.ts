@@ -1,4 +1,6 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
+
+const DAY_MS = 24 * 60 * 60 * 1_000;
 interface TimeRange {
   timeStart: string; // ISO: "2025-06-01T08:00"
   timeEnd:   string; // ISO
@@ -7,14 +9,20 @@ interface TimeRange {
 interface TimeState {
   timeRange: TimeRange; // time range for chart
   timePoint: string;    // time point for map
-  timeAnchor: 'timeStart' | 'timeEnd';
+  // timeAnchor: 'timeStart' | 'timeEnd';
 }
 
+const nowTime = new Date();
+const initialPoint = nowTime.toISOString();
 const initialState: TimeState = {
-  timeRange: { timeStart: '', timeEnd: '' },
-  timePoint: '',
-  timeAnchor: 'timeStart',
+  timePoint: initialPoint,
+  timeRange: { timeStart: new Date(nowTime.getTime() - DAY_MS).toISOString(), timeEnd: initialPoint },
 };
+// const initialState: TimeState = {
+//   timeRange: { timeStart: '', timeEnd: '' },
+//   timePoint: '',
+//   // timeAnchor: 'timeStart',
+// };
 
 const timeSlice = createSlice({
   name: 'time',
@@ -22,28 +30,13 @@ const timeSlice = createSlice({
   reducers: {
     setTimePoint(state, action: PayloadAction<string>) {
       state.timePoint = action.payload;
-      if (state.timeAnchor === 'timeStart') {
-        state.timeRange.timeStart = action.payload;
-      } else {
-        state.timeRange.timeEnd = action.payload;
-      }
-    },
-    setTimeRange(state, action: PayloadAction<TimeRange>) {
-      state.timeRange = action.payload;
-      state.timePoint =
-        state.timeAnchor === 'timeStart'
-          ? action.payload.timeStart
-          : action.payload.timeEnd;
-    },
-    setAnchor(state, action: PayloadAction<'timeStart' | 'timeEnd'>) {
-      state.timeAnchor = action.payload;
-      // change timePoint
-      state.timePoint =
-        action.payload === 'timeStart'
-          ? state.timeRange.timeStart
-          : state.timeRange.timeEnd;
+      const time = new Date(action.payload).getTime();
+      state.timeRange = {
+        timeStart: new Date(time - DAY_MS).toISOString(),
+        timeEnd: action.payload,
+      };
     },
   },
 });
-export const { setTimeRange, setAnchor, setTimePoint } = timeSlice.actions;
+export const { setTimePoint } = timeSlice.actions;
 export default timeSlice.reducer;
