@@ -1,6 +1,5 @@
-from collections import defaultdict
 from datetime import timedelta, datetime, timezone
-from typing import List, Dict, Optional
+from typing import List, Dict
 
 from sqlalchemy import func, and_
 from sqlalchemy.orm import Session
