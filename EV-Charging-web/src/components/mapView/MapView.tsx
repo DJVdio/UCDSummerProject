@@ -1,4 +1,5 @@
 import { useEffect, useState, useRef } from 'react';
+import { parseISO, format } from 'date-fns';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css'
 import { MapContainer, TileLayer, Marker, CircleMarker, Popup, FeatureGroup, GeoJSON } from 'react-leaflet';
@@ -236,9 +237,9 @@ export default function MapView() {
                     <span className='popItem'>ID:</span> {popupInfo.id} <br />
                     <span className='popItem'>Name:</span> {popupInfo.name} <br />
                     <span className='popItem'>Power:</span> {marker.power_kW} kW <br />
-                    <span className='popItem'>Type:</span> {marker.connectorType}<br />
+                    <span className='popItem'>Type:</span> {marker.popupInfo.type}<br />
                     <span className='popItem'>Status:</span> {popupInfo.status} <br />
-                    <span className='popItem'>Last&nbsp;Updated:</span> {popupInfo.lastUpdated}
+                    <span className='popItem'>Last&nbsp;Updated:</span> {format(parseISO(popupInfo.lastUpdated), 'yyyy-MM-dd HH:mm:ss')}
                   </div>
                 </Popup>
               </Marker>
