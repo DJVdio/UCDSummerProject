@@ -41,13 +41,13 @@ export interface EVMarker {
   lat: number;
   lon: number;
   power_kW: number;
-  connectorType: string;
   popupInfo: PopupInfo;
 }
 export interface PopupInfo {
   id: string;
   name: string;
   description: string;
+  type: string;
   status: string;
   lastUpdated: string;
 }
