@@ -1,7 +1,8 @@
 import { useEffect, useState, useCallback } from "react";
 import ReactECharts from "echarts-for-react";
 // import {  } from "@mui/material";
-import { getGenerationGridload, getSessionCounts, getEnergyDelivered, getStationUtilisation } from './../../api/map';
+import { useAppSelector } from '../../hooks';
+import { getGenerationGridload, getSessionCounts, getEnergyDelivered, getStationUtilisation } from './../../api/chart';
 import "./DashboardView.css"
 
 interface GenerationConsumptionPoint {
@@ -70,6 +71,9 @@ export default function DashboardView() {
   // const [charging] = useState(generateChargingSessionData);
   // const [utilisation] = useState(generateUtilisationMatrix);
   const [genCon, setGenCon] = useState<GenerationConsumptionPoint[]>([]);
+  const { currentLocationId, locations, isCustomRegionEnabled } =
+    useAppSelector(s => s.map);
+  const { timePoint } = useAppSelector(s => s.time);
   const [sessions, setSessions] = useState<SessionPoint[]>([]);
   const [energy, setEnergy] = useState<EnergyPoint[]>([]);
   const [utilisation, setUtilisation] = useState<number[][]>([]);
@@ -98,11 +102,16 @@ export default function DashboardView() {
       }
     }
     getGenerationGridloadData(); 
-    
+
     // get charging sessions counts
     async function getSessionCountsData() {
-      try {    
-        const res = await getSessionCounts();
+      try {
+        const isoTime = new Date(timePoint.replace(' ', 'T'))
+          .toISOString()
+          // .slice(0, 10);
+          .slice(0, 19) + 'Z';
+        // const isoTime = new Date(timePoint).toISOString().slice(0, 10);  
+        const res = await getSessionCounts(currentLocationId, isoTime);
         // console.log(res, 'getSessionCounts')
         const arr = res.data.charging_sessions.data.map((d) => ({
           time: d.time,
@@ -161,7 +170,7 @@ export default function DashboardView() {
     }
     getUtilisation()
   }, []);
-  
+
   const lineOption = useCallback(
     () => ({
       tooltip: { trigger: "axis" },
