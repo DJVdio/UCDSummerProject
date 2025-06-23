@@ -161,7 +161,6 @@ export default function DashboardView() {
           name: 'Generation',
           type: 'line',
           smooth: true,
-          // key：把 ISO 字符串转成毫秒数
           data: genCon.map(data => [new Date(data.time).getTime(), data.generation]),
         },
         {
