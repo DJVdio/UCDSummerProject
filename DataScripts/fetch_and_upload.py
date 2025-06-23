@@ -27,6 +27,15 @@ payload = {
     }
 }
 
+def map_status(raw_status):
+    raw_status = raw_status.upper()
+    if raw_status == "AVAILABLE":
+        return "AVAILABLE"
+    elif raw_status in {"CHARGING", "FINISHING", "OCCUPIED", "PAUSED", "PREPARING"}:
+        return "OCCUPIED"
+    else:
+        return "OFFLINE"
+
 resp = requests.post(POST_URL, json=payload, headers=HEADERS)
 stations = resp.json()["data"]
 
@@ -34,6 +43,7 @@ conn = psycopg2.connect(**DB_CONFIG)
 cur = conn.cursor()
 now = datetime.utcnow()
 
+insert_count = 0
 for s in stations:
     station_id = s["id"]
 
@@ -42,17 +52,20 @@ for s in stations:
         print(f"[Jump] station_id={station_id} ")
         continue
 
+    mapped_status = map_status(s["ss"])
+
     cur.execute("""
         INSERT INTO station_status (station_id, timestamp, status, last_updated)
         VALUES (%s, %s, %s, %s)
     """, (
         str(station_id),
         now,
-        s["ss"],
+        mapped_status,
         now
     ))
+    insert_count += 1
 
 conn.commit()
 cur.close()
 conn.close()
-print(f"[{now}] insert: {len(stations)} records")
+print(f"[{now}] insert: {insert_count} records")
