@@ -1,6 +1,9 @@
 import { useEffect, useState, useCallback } from "react";
 import ReactECharts from "echarts-for-react";
-// import {  } from "@mui/material";
+import { Tooltip } from "@mui/material";
+import InfoOutlinedIcon from "@mui/icons-material/InfoOutlined";
+import dayjs from "dayjs";
+import utc from "dayjs/plugin/utc";
 import { useAppSelector } from '../../hooks';
 import { getGenerationGridload, getSessionCounts, getEnergyDelivered, getStationUtilisation } from './../../api/chart';
 import "./DashboardView.css"
@@ -25,51 +28,17 @@ interface EnergyPoint {
   time: string;
   energy: number;
 }
-// const generateGenerationConsumptionData = (): GenerationConsumptionPoint[] => {
-//   const out: GenerationConsumptionPoint[] = [];
-//   for (let h = 0; h < 24; h++) {
-//     const baseGen = 400 + Math.sin((h / 24) * Math.PI * 2) * 150;
-//     const baseCon = 380 + Math.sin(((h + 4) / 24) * Math.PI * 2) * 130;
-//     out.push({
-//       time: `${h.toString().padStart(2, "0")}:00`,
-//       generation: Math.round(baseGen + Math.random() * 20),
-//       consumption: Math.round(baseCon + Math.random() * 20),
-//     });
-//   }
-//   return out;
-// }
 
-// const generateChargingSessionData = (): ChargingSessionPoint[] => {
-//   const out: ChargingSessionPoint[] = [];
-//   for (let h = 0; h < 24; h++) {
-//     const sessions = Math.round(
-//       5 + Math.max(0, Math.cos(((h - 18) / 24) * Math.PI * 2)) * 20 + Math.random() * 3
-//     );
-//     const energy = sessions * (10 + Math.random() * 5);
-//     out.push({ time: h, sessions, energy: Math.round(energy) });
-//   }
-//   return out;
-// }
+dayjs.extend(utc);
 
-// const generateUtilisationMatrix = (): number[][] => {
-//   const stations = 10;
-//   const matrix: number[][] = [];
-//   for (let s = 0; s < stations; s++) {
-//     const row: number[] = [];
-//     const phaseShift = (s / stations) * Math.PI * 2;
-//     for (let h = 0; h < 24; h++) {
-//       const utilisation = Math.max(0, Math.sin(((h - 6) / 24) * Math.PI * 2 + phaseShift));
-//       row.push(parseFloat(((utilisation * 0.9 + Math.random() * 0.1)).toFixed(2)));
-//     }
-//     matrix.push(row);
-//   }
-//   return matrix;
-// }
+const SESSION_COUNTS_TOOLTIP = `Charging Session counts chart shows how many EV
+charging sessions started in each time slot during the day, derived from
+changes in station status logs. Helps city planners and operators understand
+the peak charging periods of EV users throughout the day. Provides a basis for
+time-of-use pricing, grid load forecasting, and optimisation of charging
+infrastructure deployment.`;
 
 export default function DashboardView() {
-  // const [genCon] = useState(generateGenerationConsumptionData);
-  // const [charging] = useState(generateChargingSessionData);
-  // const [utilisation] = useState(generateUtilisationMatrix);
   const [genCon, setGenCon] = useState<GenerationConsumptionPoint[]>([]);
   const { currentLocationId, locations, isCustomRegionEnabled } =
     useAppSelector(s => s.map);
@@ -169,7 +138,7 @@ export default function DashboardView() {
       }
     }
     getUtilisation()
-  }, []);
+  }, [currentLocationId, timePoint]);
 
   const lineOption = useCallback(
     () => ({
@@ -208,35 +177,41 @@ export default function DashboardView() {
 
   const barCSCOption = useCallback(
     () => ({
-      tooltip: { trigger: "axis" },
-      legend: { data: ["Session Counts"] },
+      tooltip: {
+        trigger: 'axis',
+        formatter: (params: any) => {
+          const ts = params[0].value[0]; // x
+          const count = params[0].value[1]; // y
+          const time = new Date(ts).toLocaleTimeString(
+            'en-GB',
+            { hour: '2-digit', minute: '2-digit', timeZone: 'UTC' }
+          );
+          return `${time}<br/>Session Counts ${count}`;
+        },
+      },
+      legend: { data: ['Session Counts'] },
       xAxis: {
         type: 'time',
         axisLabel: {
-          formatter: (ts: number) => {
-            const cscDate = new Date(ts);
-            return cscDate.toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'});
-          }
-        }
-      },
-      yAxis: [
-        { type: "value", name: "Session Counts" },
-        // { type: "value", name: "Energy (kWh)" },
-      ],
-      series: [
-        {
-          name:'Session Counts',
-          type:'bar',
-          yAxisIndex:0,
-          itemStyle: { color: "#9eca7f" },
-          data: sessions.map(data => [new Date(data.time).getTime(), data.sessions])
+          formatter: (ts: number) =>
+            new Date(ts).toLocaleTimeString(
+              'en-GB',
+              { hour: '2-digit', minute: '2-digit', timeZone: 'UTC' }
+            ),
         },
-      ]
+      },
+      yAxis: { type: 'value', name: 'Session Counts' },
+      series: [{
+        name: 'Session Counts',
+        type: 'bar',
+        itemStyle: { color: '#9eca7f' },
+        data: sessions.map(d => [dayjs.utc(d.time).valueOf(), d.sessions]),
+      }],
     }),
     [sessions]
   );
 
-    const barEDOption = useCallback(
+  const barEDOption = useCallback(
     () => ({
       tooltip: { trigger: "axis" },
       legend: { data: ["Energy (kWh)"] },
@@ -283,7 +258,15 @@ export default function DashboardView() {
       {/*two‑column area */}
       <div className="dash-two‑column-row">
         <div className="dash-card">
-          <div className="dash-card-title">Charging Session counts</div>
+          <div className="dash-card-title">
+            Charging Session Counts
+            <Tooltip arrow title={SESSION_COUNTS_TOOLTIP}>
+              <InfoOutlinedIcon
+                fontSize="small"
+                sx={{ cursor: "pointer", color: "text.secondary" }}
+              />
+            </Tooltip>
+          </div>
           <ReactECharts option={barCSCOption()} style={{ height: 360 }} />
         </div>
         {/* <div className="dash-card">

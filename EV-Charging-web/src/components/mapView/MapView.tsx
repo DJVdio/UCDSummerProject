@@ -236,7 +236,7 @@ export default function MapView() {
                   <div className='station_content' style={{ fontSize: 14, lineHeight: 1.4 }}>
                     <span className='popItem'>ID:</span> {popupInfo.id} <br />
                     <span className='popItem'>Name:</span> {popupInfo.name} <br />
-                    <span className='popItem'>Power:</span> {marker.power_kW} kW <br />
+                    {/* <span className='popItem'>Power:</span> {marker.power_kW} kW <br /> */}
                     <span className='popItem'>Type:</span> {marker.popupInfo.type}<br />
                     <span className='popItem'>Status:</span> {popupInfo.status} <br />
                     <span className='popItem'>Last&nbsp;Updated:</span> {format(parseISO(popupInfo.lastUpdated), 'yyyy-MM-dd HH:mm:ss')}
@@ -261,7 +261,7 @@ export default function MapView() {
             >
               <CloseIcon fontSize="small" />
             </IconButton>
-            <div className='legend-kw'>
+            {/* <div className='legend-kw'>
               <div className='kw-detail kw-detail-high'>
                 high power
               </div>
@@ -271,7 +271,7 @@ export default function MapView() {
               <div className='kw-detail kw-detail-low'>
                 low power
               </div>
-            </div>
+            </div> */}
             <div className='legend-status'>
               <div className='status-detail available'>
                 <span className='status-icon'></span>
