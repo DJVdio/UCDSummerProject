@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, timezone
 
 import re
 
@@ -37,3 +37,12 @@ def parse_datetime(datetime_str: str) -> datetime:
 
     # 如果所有尝试都失败
     raise ValueError(f"Unsupported datetime format: {datetime_str}")
+
+def process_start_end_time(start_time, end_time):
+    parsed_start = parse_datetime(start_time)
+    parsed_end = parse_datetime(end_time)
+    if parsed_start.tzinfo is None:
+        parsed_start = parsed_start.replace(tzinfo=timezone.utc)
+    if parsed_end.tzinfo is None:
+        parsed_end = parsed_end.replace(tzinfo=timezone.utc)
+    return parsed_start, parsed_end
