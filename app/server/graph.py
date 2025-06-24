@@ -1,6 +1,5 @@
-from collections import defaultdict
 from datetime import timedelta, datetime, timezone
-from typing import List, Dict, Optional
+from typing import List, Dict
 
 from sqlalchemy import func, and_
 from sqlalchemy.orm import Session
@@ -10,42 +9,48 @@ from server.charging_stations import get_by_city_id
 from util.time_process import parse_datetime
 
 
-def charging_sessions_counts(city_id: str, datetime_str: str, db: Session):
+def charging_sessions_counts(city_id: str, start_time: str, end_time: str, db: Session):
     try:
-        parsed_datetime = parse_datetime(datetime_str)
-        if parsed_datetime.tzinfo is None:
-            parsed_datetime = parsed_datetime.replace(tzinfo=timezone.utc)
+        # 解析开始时间和结束时间
+        parsed_start = parse_datetime(start_time)
+        parsed_end = parse_datetime(end_time)
+
+        # 确保有时区信息（默认UTC）
+        if parsed_start.tzinfo is None:
+            parsed_start = parsed_start.replace(tzinfo=timezone.utc)
+        if parsed_end.tzinfo is None:
+            parsed_end = parsed_end.replace(tzinfo=timezone.utc)
     except ValueError as e:
         raise ValueError(f"Invalid datetime format: {str(e)}")
-
-    # 获取当天的起始时间 (00:00 UTC)
-    start_of_day = parsed_datetime.replace(
-        hour=0, minute=0, second=0, microsecond=0
-    )
-    # 获取当天的结束时间 (次日00:00 UTC)
-    end_of_day = start_of_day + timedelta(days=1)
 
     # 获取城市所有充电桩
     charging_stations = get_by_city_id(city_id, db)
     station_ids = [station.station_id for station in charging_stations]
 
     # 在数据库层面直接统计每个小时的OCCUPIED状态变化次数
-    hourly_counts = get_hourly_session_counts(station_ids, start_of_day, end_of_day, db)
+    hourly_counts = get_hourly_session_counts(station_ids, parsed_start, parsed_end, db)
 
-    # 生成结果列表
+    # 生成从开始时间到结束时间的所有整点小时
+    current_hour = parsed_start.replace(minute=0, second=0, microsecond=0)
+    end_hour = parsed_end.replace(minute=0, second=0, microsecond=0)
     sessions_list = []
-    for hour in range(24):
-        session_time = start_of_day + timedelta(hours=hour)
-        count = hourly_counts.get(hour, 0)
+
+    # 遍历每个整点小时
+    while current_hour < end_hour:
+        # 获取该小时的计数（若无则为0）
+        count = hourly_counts.get(current_hour, 0)
         sessions_list.append({
-            "time": session_time,
+            "time": current_hour.isoformat(),  # 使用ISO格式时间字符串
             "sessioncounts": count
         })
+        current_hour += timedelta(hours=1)
+
     result = {
-        "date": datetime_str,
+        "start_time": start_time,
+        "end_time": end_time,
         "timezone": "Europe/Dublin",
-        "charging_sessions":{
-            "units":{
+        "charging_sessions": {
+            "units": {
                 "sessions": "count"
             },
             "data": sessions_list
@@ -55,15 +60,15 @@ def charging_sessions_counts(city_id: str, datetime_str: str, db: Session):
     return result
 
 
-def get_hourly_session_counts(station_ids: List[str], start_datetime: datetime, end_datetime: datetime, db: Session) -> \
-Dict[int, int]:
-    """获取每个小时的OCCUPIED状态变化次数"""
+def get_hourly_session_counts(
+        station_ids: List[str], start_datetime: datetime, end_datetime: datetime, db: Session) -> Dict[datetime, int]:
+    """获取每个整点小时的OCCUPIED状态变化次数"""
     if not station_ids:
         return {}
 
-    # 转换aware时间为naive时间
-    naive_start = start_datetime.replace(tzinfo=None)
-    naive_end = end_datetime.replace(tzinfo=None)
+    # 转换aware时间为naive时间（假设数据库存储UTC时间）
+    naive_start = start_datetime.astimezone(timezone.utc).replace(tzinfo=None)
+    naive_end = end_datetime.astimezone(timezone.utc).replace(tzinfo=None)
 
     # 使用窗口函数检测状态变化
     subquery = db.query(
@@ -80,14 +85,20 @@ Dict[int, int]:
         StationStatus.timestamp < naive_end
     ).subquery()
 
+    # 按小时分组并计数
     results = db.query(
-        func.extract('hour', subquery.c.timestamp).label('hour'),
+        func.date_trunc('hour', subquery.c.timestamp).label('hour_start'),
         func.count().label('count')
     ).filter(
         and_(
             subquery.c.prev_status != "OCCUPIED",
             subquery.c.status == "OCCUPIED"
         )
-    ).group_by('hour').all()
+    ).group_by('hour_start').all()
 
-    return {int(row.hour): row.count for row in results}
+    # 将结果转换为aware datetime对象（UTC时区）
+    return {
+        # 将数据库返回的naive时间转为aware UTC时间
+        hour_start.replace(tzinfo=timezone.utc): count
+        for hour_start, count in results
+    }
