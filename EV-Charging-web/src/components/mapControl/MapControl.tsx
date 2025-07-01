@@ -7,7 +7,7 @@ import {
 } from '@mui/x-date-pickers';
 import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
 import { useAppDispatch, useAppSelector } from './../../hooks';
-import { setTimePoint } from './../../store/timeSlice';
+import { setTimeEnd } from './../../store/timeSlice';
 import { fetchCities, setLocation, setCustomRegionEnabled } from './../../store/mapSlice';
 import './MapControl.css'
 
@@ -49,7 +49,7 @@ export default function MapControl() {
         `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())} ` +
         `${pad(now.getHours())}:${pad(now.getMinutes())}`;
 
-      dispatch(setTimePoint(dateString));
+      dispatch(setTimeEnd(dateString));
     } else {
       const d = new Date(timePoint);
       if (!isNaN(d.getTime())) {
@@ -76,7 +76,7 @@ export default function MapControl() {
     const dateString = `${year}-${month}-${day} ${hours}:${minutes}`;
 
     // dispatch to Redux
-    dispatch(setTimePoint(dateString));
+    dispatch(setTimeEnd(dateString));
   };
 
   return (

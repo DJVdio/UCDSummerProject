@@ -4,10 +4,11 @@ import { FormControl, InputLabel, Select, MenuItem } from '@mui/material';
 import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
 import { Box } from '@mui/material';
 import { useAppDispatch, useAppSelector } from '../../hooks';
-import { setTimePoint } from './../../store/timeSlice';
+import { setTimeStart, setTimeEnd } from './../../store/timeSlice';
 import { fetchCities, setLocation } from '../../store/mapSlice';
 import "./ChartControl.css"
 
+// 这个日期前所有时间都不可被选择
 const DAY_MS = 86_400_000;
 const MIN_ALLOWED_END = new Date(2025, 5, 20, 0, 0, 0, 0);
 const isBeforeDayEnd = (date: Date) => date < MIN_ALLOWED_END;
@@ -37,13 +38,13 @@ export default function TimeRangeController() {
     if (newValue && newValue > new Date()) return;
     if (newValue < MIN_ALLOWED_START) return;
     const newEnd = new Date(newValue.getTime() + DAY_MS);
-    dispatch(setTimePoint(newEnd.toISOString()));
+    dispatch(setTimeStart(newValue.toISOString()));
   };
   const onEndChange = (newValue: Date | null) => {
     if (!newValue) return;
     if (newValue && newValue > new Date()) return;
     if (newValue < MIN_ALLOWED_END) return;
-    dispatch(setTimePoint(newValue.toISOString()));
+    dispatch(setTimeEnd(newValue.toISOString()));
   };
 
   // default 24 hours
