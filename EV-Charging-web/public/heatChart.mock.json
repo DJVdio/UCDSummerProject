@@ -2,13 +2,14 @@
   "code": 200,
   "message": "OK",
   "data": {
-    "date": "2025-06-09",
+    "date": "2025-06-01T16:15Z",
     "timezone": "Europe/Dublin",
     "station_utilisation": {
       "unit": "ratio",
       "stations": [
         {
           "station_id": "S0",
+          "station_name": "aaa",
           "data": [
             { "timestamp": "2025-06-09T00:00:00Z", "utilisation": 0.18 },
             { "timestamp": "2025-06-09T01:00:00Z", "utilisation": 0.14 },
@@ -89,6 +90,7 @@
 
         {
           "station_id": "S1",
+          "station_name": "bbb",
           "data": [
             { "timestamp": "2025-06-09T00:00:00Z", "utilisation": 0.12 },
             { "timestamp": "2025-06-09T01:00:00Z", "utilisation": 0.09 },
@@ -169,6 +171,7 @@
 
         {
           "station_id": "S2",
+          "station_name": "ccc",
           "data": [
             { "timestamp": "2025-06-09T00:00:00Z", "utilisation": 0.20 },
             { "timestamp": "2025-06-09T01:00:00Z", "utilisation": 0.16 },
@@ -249,6 +252,7 @@
 
         {
           "station_id": "S3",
+          "station_name": "ddd",
           "data": [
             { "timestamp": "2025-06-09T00:00:00Z", "utilisation": 0.15 },
             { "timestamp": "2025-06-09T01:00:00Z", "utilisation": 0.11 },

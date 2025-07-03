@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
 
 from database import get_db
-from schemas.response import Response
+from util.response import Response
 from server.station_status import get_by_station_id
 
 router = APIRouter()

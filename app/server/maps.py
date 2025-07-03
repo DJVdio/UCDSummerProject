@@ -1,24 +1,27 @@
-from numpy.f2py.auxfuncs import throw_error
-from sqlalchemy.orm import Session
-from sqlalchemy import and_, func
+from datetime import datetime, timezone
 from typing import Dict, List
-from datetime import datetime, date
+
+from sqlalchemy import and_, func
+from sqlalchemy.orm import Session
 
 from models import StationStatus
 from server.charging_stations import get_by_city_id
+from util.time_process import parse_datetime
 
 
-def get_map_by_city_and_time(city_id: str, date: str, db: Session) -> Dict[str, List[dict]]:
-    # 将字符串日期转换为 datetime 对象
+def get_map_by_city_and_time(city_id: str, datetime_str: str, db: Session) -> Dict[str, List[dict]]:
+    # 保存原始输入的时间字符串（用于返回结果）
+    original_datetime_str = datetime_str
+    # 验证并解析时间字符串（处理各种时区格式）
     try:
-        # 解析为日期对象
-        query_date = datetime.strptime(date, "%Y-%m-%d").date()
-    except ValueError:
-        throw_error("Invalid date format")
+        parsed_datetime = parse_datetime(datetime_str)
+    except ValueError as e:
+        raise ValueError(f"Invalid datetime format: {str(e)}")
 
     charging_stations = get_by_city_id(city_id, db)
     station_info_list = []
     station_ids = []
+
     for station in charging_stations:
         station_info = {
             "lat": station.lat,
@@ -27,6 +30,7 @@ def get_map_by_city_and_time(city_id: str, date: str, db: Session) -> Dict[str, 
                 "id": station.station_id,
                 "name": station.name,
                 "description": station.description,
+                "type": station.connector_type,
                 "status": None,
                 "lastUpdated": None
             }
@@ -34,45 +38,62 @@ def get_map_by_city_and_time(city_id: str, date: str, db: Session) -> Dict[str, 
         station_info_list.append(station_info)
         station_ids.append(station.station_id)
 
-    status_map = bulk_get_status(station_ids, query_date, db)
+    status_map = bulk_get_status(station_ids, parsed_datetime, db)
+
     for info in station_info_list:
         station_id = info["popupInfo"]["id"]
         if station_id in status_map:
             status = status_map[station_id]
             info["popupInfo"]["status"] = status.status
-            info["popupInfo"]["lastUpdated"] = status.last_updated.isoformat() if status.last_updated else None
+            if status.timestamp:
+                if status.timestamp.tzinfo is None:
+                    info["popupInfo"]["lastUpdated"] = status.timestamp.replace(tzinfo=timezone.utc).isoformat()
+                else:
+                    info["popupInfo"]["lastUpdated"] = status.timestamp.astimezone(timezone.utc).isoformat()
 
-    # 使用原始日期字符串作为键返回
-    return {date: station_info_list}
+    return {original_datetime_str: station_info_list}
 
 
-def bulk_get_status(station_ids: List[str], query_date: date, db: Session):
+def bulk_get_status(station_ids: List[str], parsed_datetime: datetime, db: Session) -> Dict[str, object]:
     if not station_ids:
         return {}
-    start_date = datetime.combine(query_date, datetime.min.time())
-    end_date = datetime.combine(query_date, datetime.max.time())
+
+    if parsed_datetime.tzinfo is None:
+        query_datetime = parsed_datetime.replace(tzinfo=timezone.utc)
+    else:
+        query_datetime = parsed_datetime.astimezone(timezone.utc)
+
+    # start_datetime = query_datetime - timedelta(minutes=15)
+    end_datetime = query_datetime
+
+    # 创建子查询：获取每个充电站在时间范围内的最新时间戳
     subquery = (
         db.query(
             StationStatus.station_id,
-            func.max(StationStatus.last_updated).label('max_updated')
+            func.max(StationStatus.last_updated).label('latest')
         )
         .filter(
             StationStatus.station_id.in_(station_ids),
-            StationStatus.last_updated >= start_date,
-            StationStatus.last_updated <= end_date
+            # StationStatus.timestamp >= start_datetime,
+            StationStatus.timestamp <= end_datetime
         )
         .group_by(StationStatus.station_id)
         .subquery()
     )
+
+    # 主查询：获取最新时间戳对应的完整状态记录
     results = (
         db.query(StationStatus)
         .join(
             subquery,
             and_(
                 StationStatus.station_id == subquery.c.station_id,
-                StationStatus.last_updated == subquery.c.max_updated
+                StationStatus.last_updated == subquery.c.latest
             )
         )
         .all()
     )
+
     return {status.station_id: status for status in results}
+
+

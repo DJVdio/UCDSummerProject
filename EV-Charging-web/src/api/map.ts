@@ -1,11 +1,13 @@
 import { createService } from '../utils/request';
 import type { LatLngExpression } from 'leaflet';
 
-// const BASE_URL = "https://9026-37-228-239-110.ngrok-free.app"; // backend import.meta.env.BASE_URL;
-const BASE_URL = "http://localhost:5173"; // frontend
+const BASE_URL = "http://35.205.60.141:8000"; // backend import.meta.env.BASE_URL;
+const BASE_URL_MOCK = "http://localhost:5173"; // frontend
 
 // 创建 Axios 实例
 const EV = createService(BASE_URL);
+
+const EV_MOCK = createService(BASE_URL_MOCK);
 
 /**
  * get location
@@ -24,24 +26,28 @@ export interface CitiesResponse {
   data: CityApiItem[];
 }
 export const getAllCities = async (): Promise<CitiesResponse> => {
-  const response = await EV.get<CitiesResponse>('/cities.mock.json'); // backend: '/cities/all'
+  const response = await EV.get<CitiesResponse>('/cities/all'); // backend: '/cities/all' // /cities.mock.json
   return response.data;
 };
+// export const getAllCities = async (): Promise<CitiesResponse> => {
+//   const response = await EV_MOCK.get<CitiesResponse>('/cities.mock.json'); // backend: '/cities/all' // /cities.mock.json
+//   return response.data;
+// };
 
 /**
  * get charging stations
  */
 export interface EVMarker {
   lat: number;
-  lng: number;
+  lon: number;
   power_kW: number;
-  connectorType: string;
   popupInfo: PopupInfo;
 }
 export interface PopupInfo {
   id: string;
   name: string;
   description: string;
+  type: string;
   status: string;
   lastUpdated: string;
 }
@@ -50,77 +56,25 @@ export interface MapResponse {
   message: string;
   data: Record<string, EVMarker[]>;
 }
-export const getMapMarkers = async (): Promise<MapResponse> => {
-  const { data } = await EV.get<MapResponse>('/map.mock.json');
+// mock request
+// export const getMapMarkers = async (): Promise<MapResponse> => {
+//   const { data } = await EV_MOCK.get<MapResponse>(
+//     '/map.mock.json',
+//   ); //  /map.mock.json
+//   return data;
+// }
+export const getMapMarkers = async (
+  cityId: string,
+  datetime: string
+): Promise<MapResponse> => {
+  const { data } = await EV.get<MapResponse>(
+    '/map/get_map_by_city_and_time',
+    {
+      params: {
+        city_id: cityId,
+        datetime
+      }
+    }
+  ); //  /map.mock.json
   return data;
 }
-
-/**
- * get chart data
- */
-export interface ChartResponse<T> {
-  code: number;
-  message: string;
-  data: T;
-}
-export interface GenConPayload {
-  date: string;
-  timezone: string;
-  generation_gridload: GenerationConsumption;
-}
-export interface GenerationConsumption {
-  // interval: string;
-  unit: string;
-  data: { time: string; generation_kw: number; gridload_kw: number }[];
-}
-
-export const getGenerationGridload = async ():
-  Promise<ChartResponse<GenConPayload>> => {
-  const resp = await EV.get<ChartResponse<GenConPayload>>('/lineChart.mock.json');
-  return resp.data;    // 这是 { code, message, data: GenerationConsumption }
-};
-
-export interface SessionsAndEnergy {
-  date: string;
-  timezone: string;
-  charging_sessions: ChargingSessions;
-}
-export interface ChargingSessions {
-  // interval: string;
-  units: { sessions: string; energy: string };
-  data: { time: string; session_count: number; energy_kwh: number }[];
-}
-
-export interface StationUtilisation {
-  // interval: string;
-  unit: string;
-  stations: { station_id: string; utilisation: number[] }[];
-}
-
-export const getChargingSessions = async ():
-  Promise<ChartResponse<SessionsAndEnergy>> => {
-  const resp = await EV.get<ChartResponse<SessionsAndEnergy>>('/barChart.mock.json');
-  return resp.data;
-};
-export interface StationUtilisation {
-  date: string;
-  timezone: string;
-  station_utilisation: StationUtilisationData;
-}
-export interface StationUtilisationData {
-  unit: string;  // "ratio"
-  stations: StationRow[];
-}
-export interface StationRow {
-  station_id: string;
-  data: Array<{
-    timestamp: string;      // ISO string
-    utilisation: number;    // 0～1
-  }>;
-}
-
-export const getStationUtilisation = async ():
-  Promise<ChartResponse<StationUtilisation>> => {
-  const resp = await EV.get<ChartResponse<StationUtilisation>>('/heatChart.mock.json');
-  return resp.data;
-};

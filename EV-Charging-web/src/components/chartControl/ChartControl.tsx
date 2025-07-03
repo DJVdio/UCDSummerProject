@@ -1,18 +1,26 @@
 import { useState, useEffect } from 'react';
-import { DateTimePicker, LocalizationProvider } from '@mui/x-date-pickers';
+import { DateTimePicker, LocalizationProvider, DateTimeValidationError } from '@mui/x-date-pickers';
 import { FormControl, InputLabel, Select, MenuItem } from '@mui/material';
 import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
 import { Box } from '@mui/material';
 import { useAppDispatch, useAppSelector } from '../../hooks';
-import { setTimeRange, setTimePoint } from './../../store/timeSlice';
+import { setTimePoint } from './../../store/timeSlice';
 import { fetchCities, setLocation } from '../../store/mapSlice';
 import "./ChartControl.css"
+
+const DAY_MS = 86_400_000;
+const MIN_ALLOWED_END = new Date(2025, 5, 20, 0, 0, 0, 0);
+const isBeforeDayEnd = (date: Date) => date < MIN_ALLOWED_END;
+
+const MIN_ALLOWED_START = new Date(2025, 5, 19, 0, 0, 0, 0);
+const isBeforeDayStart = (date: Date) => date < MIN_ALLOWED_START;
 
 export default function TimeRangeController() {
   const dispatch = useAppDispatch();
   const { timeRange, timePoint } = useAppSelector(s => s.time);
   const { locations, currentLocationId, isCustomRegionEnabled } =
     useAppSelector(s => s.map);
+  const [isInvalid, setIsInvalid] = useState(false);
 
   // select city
   const handleLocationChange = (locId: string) => {
@@ -20,47 +28,39 @@ export default function TimeRangeController() {
   };
 
   useEffect(() => {
-    console.log(locations, 'locations')
-  }, [locations]);
-
-  useEffect(() => {
     dispatch(fetchCities());
   }, [dispatch]);
 
   // DateTimePickers update
-  const onStartChange = (date: Date | null) => {
-    if (!date) return;
-    dispatch(setTimeRange({ timeStart: date.toISOString(), timeEnd: timeRange.timeEnd }));
-    dispatch(setTimePoint(date.toISOString()));
+  const onStartChange = (newValue: Date | null) => {
+    if (!newValue) return;
+    if (newValue && newValue > new Date()) return;
+    if (newValue < MIN_ALLOWED_START) return;
+    const newEnd = new Date(newValue.getTime() + DAY_MS);
+    dispatch(setTimePoint(newEnd.toISOString()));
   };
-  const onEndChange = (date: Date | null) => {
-    if (!date) return;
-    dispatch(setTimeRange({ timeStart: timeRange.timeStart, timeEnd: date.toISOString() }));
+  const onEndChange = (newValue: Date | null) => {
+    if (!newValue) return;
+    if (newValue && newValue > new Date()) return;
+    if (newValue < MIN_ALLOWED_END) return;
+    dispatch(setTimePoint(newValue.toISOString()));
   };
 
-  useEffect(() => {
-    if (!timeRange.timeStart || !timeRange.timeEnd) {
-      console.log('is there time?')
-      const nowTime = new Date();
-      const oneDayAgo = new Date(nowTime.getTime() - 24 * 60 * 60 * 1000);
-      console.log(nowTime)
-      dispatch(
-        setTimeRange({
-          timeStart: oneDayAgo.toISOString(),
-          timeEnd: nowTime.toISOString(),
-        })
-      )
-    }
-  }, [timeRange.timeStart, timeRange.timeEnd, dispatch]);
-  // Slider（假设最多查 30 天，可把刻度映射到时间戳）
-  // const onSliderChange = (_: any, [startTs, endTs]: number[]) => {
-  //   dispatch(
-  //     setTimeRange({
-  //       timeStart: new Date(startTs).toISOString(),
-  //       timeEnd: new Date(endTs).toISOString(),
-  //     }),
-  //   );
-  // };
+  // default 24 hours
+  // useEffect(() => {
+  //   if (!timeRange.timeStart || !timeRange.timeEnd) {
+  //     console.log('is there time?')
+  //     const nowTime = new Date();
+  //     const oneDayAgo = new Date(nowTime.getTime() - 24 * 60 * 60 * 1000);
+  //     console.log(nowTime)
+  //     dispatch(
+  //       setTimeRange({
+  //         timeStart: oneDayAgo.toISOString(),
+  //         timeEnd: nowTime.toISOString(),
+  //       })
+  //     )
+  //   }
+  // }, [timeRange.timeStart, timeRange.timeEnd, dispatch]);
 
   return (
     <div className='control-wrapper'>
@@ -101,7 +101,17 @@ export default function TimeRangeController() {
                 onChange={onStartChange}
                 minutesStep={1}
                 disableFuture
-                slotProps={{ textField: { size: 'small' } }}
+                shouldDisableDate={isBeforeDayStart}
+                onError={(reason: DateTimeValidationError | null) =>
+                  setIsInvalid(reason === 'shouldDisableDate')
+                }
+                slotProps={{ 
+                  textField: { 
+                    size: 'small',
+                    error: isInvalid,
+                    helperText: isInvalid ? `Only ${MIN_ALLOWED_START} are allowed` : '',
+                  } 
+                }}
               />
               <DateTimePicker
                 label="End"
@@ -109,23 +119,19 @@ export default function TimeRangeController() {
                 onChange={onEndChange}
                 minutesStep={1}
                 disableFuture
-                slotProps={{ textField: { size: 'small' } }}
+                shouldDisableDate={isBeforeDayEnd}
+                onError={(reason: DateTimeValidationError | null) =>
+                  setIsInvalid(reason === 'shouldDisableDate')
+                }
+                slotProps={{ 
+                  textField: { 
+                    size: 'small',
+                    error: isInvalid,
+                    helperText: isInvalid ? `Only ${MIN_ALLOWED_END} are allowed` : '',
+                  } 
+                }}
               />
             </Box>
-
-            {/* 可选：一个直观的范围滑块 */}
-            {/* <Slider
-              sx={{ mt: 3 }}
-              value={[
-                timeRange.timeStart ? Date.parse(timeRange.timeStart) : 0,
-                timeRange.timeEnd ? Date.parse(timeRange.timeEnd) : 0,
-              ]}
-              min={Date.parse('2025-06-01T00:00')}
-              max={Date.parse('2025-06-08T23:59')}
-              step={5 * 60 * 1000} // 5 min
-              onChange={onSliderChange}
-              valueLabelDisplay="off"
-            /> */}
           </LocalizationProvider>
         </div>
       </div>

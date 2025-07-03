@@ -1,0 +1,5 @@
+.home_page_dash {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}

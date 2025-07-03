@@ -1,13 +1,17 @@
 import { useEffect, useState, useCallback } from "react";
 import ReactECharts from "echarts-for-react";
-// import {  } from "@mui/material";
-import { getGenerationGridload, getChargingSessions, getStationUtilisation } from './../../api/map';
+import { Tooltip } from "@mui/material";
+import InfoOutlinedIcon from "@mui/icons-material/InfoOutlined";
+import dayjs from "dayjs";
+import utc from "dayjs/plugin/utc";
+import { useAppSelector } from '../../hooks';
+import { getGenerationGridload, getSessionCounts, getEnergyDelivered, getStationUtilisation } from './../../api/chart';
 import "./DashboardView.css"
 
 interface GenerationConsumptionPoint {
   time: string;
   generation: number;
-  consumption: number;
+  grid_load: number;
 }
 
 interface ChargingSessionPoint {
@@ -15,54 +19,32 @@ interface ChargingSessionPoint {
   sessions: number;
   energy: number;
 }
+interface SessionPoint {
+  time: string;
+  sessions: number;
+}
 
-// const generateGenerationConsumptionData = (): GenerationConsumptionPoint[] => {
-//   const out: GenerationConsumptionPoint[] = [];
-//   for (let h = 0; h < 24; h++) {
-//     const baseGen = 400 + Math.sin((h / 24) * Math.PI * 2) * 150;
-//     const baseCon = 380 + Math.sin(((h + 4) / 24) * Math.PI * 2) * 130;
-//     out.push({
-//       time: `${h.toString().padStart(2, "0")}:00`,
-//       generation: Math.round(baseGen + Math.random() * 20),
-//       consumption: Math.round(baseCon + Math.random() * 20),
-//     });
-//   }
-//   return out;
-// }
+interface EnergyPoint {
+  time: string;
+  energy: number;
+}
 
-// const generateChargingSessionData = (): ChargingSessionPoint[] => {
-//   const out: ChargingSessionPoint[] = [];
-//   for (let h = 0; h < 24; h++) {
-//     const sessions = Math.round(
-//       5 + Math.max(0, Math.cos(((h - 18) / 24) * Math.PI * 2)) * 20 + Math.random() * 3
-//     );
-//     const energy = sessions * (10 + Math.random() * 5);
-//     out.push({ time: h, sessions, energy: Math.round(energy) });
-//   }
-//   return out;
-// }
+dayjs.extend(utc);
 
-// const generateUtilisationMatrix = (): number[][] => {
-//   const stations = 10;
-//   const matrix: number[][] = [];
-//   for (let s = 0; s < stations; s++) {
-//     const row: number[] = [];
-//     const phaseShift = (s / stations) * Math.PI * 2;
-//     for (let h = 0; h < 24; h++) {
-//       const utilisation = Math.max(0, Math.sin(((h - 6) / 24) * Math.PI * 2 + phaseShift));
-//       row.push(parseFloat(((utilisation * 0.9 + Math.random() * 0.1)).toFixed(2)));
-//     }
-//     matrix.push(row);
-//   }
-//   return matrix;
-// }
+const SESSION_COUNTS_TOOLTIP = `Charging Session counts chart shows how many EV
+charging sessions started in each time slot during the day, derived from
+changes in station status logs. Helps city planners and operators understand
+the peak charging periods of EV users throughout the day. Provides a basis for
+time-of-use pricing, grid load forecasting, and optimisation of charging
+infrastructure deployment.`;
 
 export default function DashboardView() {
-  // const [genCon] = useState(generateGenerationConsumptionData);
-  // const [charging] = useState(generateChargingSessionData);
-  // const [utilisation] = useState(generateUtilisationMatrix);
   const [genCon, setGenCon] = useState<GenerationConsumptionPoint[]>([]);
-  const [charging, setCharging] = useState<ChargingSessionPoint[]>([]);
+  const { currentLocationId, locations, isCustomRegionEnabled } =
+    useAppSelector(s => s.map);
+  const { timePoint } = useAppSelector(s => s.time);
+  const [sessions, setSessions] = useState<SessionPoint[]>([]);
+  const [energy, setEnergy] = useState<EnergyPoint[]>([]);
   const [utilisation, setUtilisation] = useState<number[][]>([]);
   // use for api
   const [loading, setLoading] = useState<boolean>(true);
@@ -78,7 +60,7 @@ export default function DashboardView() {
           // console.log(d)
           time: d.time,
           generation: d.generation_kw,
-          consumption: d.gridload_kw,
+          grid_load: d.gridload_kw,
         }));
         setGenCon(arr);
       } catch (err) {
@@ -88,26 +70,52 @@ export default function DashboardView() {
         setLoading(false);
       }
     }
-    getGenerationGridloadData();    
-    // get charging sessions
-    async function getGenAndConData() {
+    getGenerationGridloadData(); 
+
+    // get charging sessions counts
+    async function getSessionCountsData() {
       try {
-        const res = await getChargingSessions();
-        console.log(res.data, 'dash res of gene')
-        const arr = res.data.charging_sessions.data.map(d => ({
-          time: d.time,
-          sessions: d.session_count,
-          energy: d.energy_kwh,
+        const isoTime = new Date(timePoint.replace(' ', 'T'))
+          .toISOString()
+          // .slice(0, 10);
+          .slice(0, 19) + 'Z';
+        // const isoTime = new Date(timePoint).toISOString().slice(0, 10);  
+        const res = await getSessionCounts(currentLocationId, isoTime);
+        // console.log(res, 'getSessionCounts')
+        const arr = res.data.charging_sessions.data.map((data) => ({
+          time: data.time,
+          sessions: data.sessioncounts,
         }));
-        setCharging(arr);
+        // console.log(arr)
+        setSessions(arr);
       } catch (err) {
-        console.error('Failed to load GenerationConsumption data', err);
-        setError('Failed to load GenerationConsumption data, please try again later.');
+        console.error('Failed to load getSessionCounts data', err);
+        setError('Failed to load getSessionCounts data, please try again later.');
       } finally {
         setLoading(false);
       }
     }
-    getGenAndConData(); 
+    getSessionCountsData()
+
+    // get Energy Delivered
+    async function getEnergyDeliveredData() {
+      try {
+        const res = await getEnergyDelivered();
+        console.log(res, 'getEnergyDeliveredData')
+        const arr = res.data.energy_delivered.data.map((d) => ({
+          time: d.time,
+          energy: d.energy_kwh,
+        }));
+        console.log(arr, 'getEnergyDeliveredData')
+        setEnergy(arr);
+      } catch (err) {
+        console.error('Failed to load EnergyDelivered data', err);
+        setError('Failed to load EnergyDelivered data, please try again later.');
+      } finally {
+        setLoading(false);
+      }
+    }
+    getEnergyDeliveredData()
 
     // get station utilisation
     async function getUtilisation() {
@@ -124,25 +132,26 @@ export default function DashboardView() {
         setUtilisation(matrix);
       } catch (err) {
         console.error(err);
-        setError('加载站点利用率数据失败');
+        setError('Failed to load site utilisation data');
       } finally {
         setLoading(false);
       }
     }
     getUtilisation()
-  }, []);
+  }, [currentLocationId, timePoint]);
+
   const lineOption = useCallback(
     () => ({
       tooltip: { trigger: "axis" },
-      legend: { data: ["Generation", "Consumption"] },
+      legend: { data: ["Generation", "grid load"] },
       // xAxis: { type: "category", data: genCon.map((d) => d.time) },
       xAxis: {
         type: 'time',
         boundaryGap: false,
         axisLabel: {
           formatter: (ts: number) => {
-            const d = new Date(ts);
-            return d.toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'});
+            const date = new Date(ts);
+            return date.toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'});
           }
         }
       },
@@ -152,62 +161,89 @@ export default function DashboardView() {
           name: 'Generation',
           type: 'line',
           smooth: true,
-          // key：把 ISO 字符串转成毫秒数
-          data: genCon.map(d => [new Date(d.time).getTime(), d.generation]),
+          data: genCon.map(data => [new Date(data.time).getTime(), data.generation]),
         },
         {
           name: 'grid load',
           type: 'line',
           smooth: true,
-          data: genCon.map(d => [new Date(d.time).getTime(), d.consumption]),
+          data: genCon.map(data => [new Date(data.time).getTime(), data.grid_load]),
         }
       ]
     }),
     [genCon]
   );
 
-  const barOption = useCallback(
+  const barCSCOption = useCallback(
     () => ({
-      tooltip: { trigger: "axis" },
-      legend: { data: ["Sessions", "Energy"] },
+      tooltip: {
+        trigger: 'axis',
+        formatter: (params: any) => {
+          const ts = params[0].value[0]; // x
+          const count = params[0].value[1]; // y
+          const time = new Date(ts).toLocaleTimeString(
+            'en-GB',
+            { hour: '2-digit', minute: '2-digit', timeZone: 'UTC' }
+          );
+          return `${time}<br/>Session Counts ${count}`;
+        },
+      },
+      legend: { data: ['Session Counts'] },
       xAxis: {
         type: 'time',
         axisLabel: {
-          formatter: (ts: number) => {
-            const d = new Date(ts);
-            return d.toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'});
-          }
-        }
+          formatter: (ts: number) =>
+            new Date(ts).toLocaleTimeString(
+              'en-GB',
+              { hour: '2-digit', minute: '2-digit', timeZone: 'UTC' }
+            ),
+        },
       },
-      yAxis: [
-        { type: "value", name: "Sessions" },
-        { type: "value", name: "Energy (kWh)" },
-      ],
+      yAxis: { type: 'value', name: 'Session Counts' },
+      series: [{
+        name: 'Session Counts',
+        type: 'bar',
+        itemStyle: { color: '#9eca7f' },
+        data: sessions.map(d => [dayjs.utc(d.time).valueOf(), d.sessions]),
+      }],
+    }),
+    [sessions]
+  );
+
+  const barEDOption = useCallback(
+    () => ({
+      tooltip: { trigger: "axis" },
+      legend: { data: ["Energy (kWh)"] },
+      xAxis: {
+        type: "time",
+        axisLabel: {
+          formatter: (ts: number) =>
+            new Date(ts).toLocaleTimeString("en-GB", {
+              hour: "2-digit",
+              minute: "2-digit",
+            }),
+        },
+      },
+      yAxis: { type: "value", name: "kWh" },
       series: [
         {
-          name:'Sessions',
-          type:'bar',
-          yAxisIndex:0,
-          data: charging.map(d => [new Date(d.time).getTime(), d.sessions])
+          name: "Energy (kWh)",
+          type: "bar",
+          itemStyle: { color: "#5a6fc0" },
+          data: energy.map((data) => [Date.parse(data.time), data.energy]),
         },
-        {
-          name:'Energy',
-          type:'bar',
-          yAxisIndex:1,
-          data: charging.map(d => [new Date(d.time).getTime(), d.energy])
-        }
-      ]
+      ],
     }),
-    [charging]
+    [energy]
   );
 
   const heatOption = useCallback(() => {
     const data: [number, number, number][] = [];
-    utilisation.forEach((row, s) => row.forEach((val, h) => data.push([h, s, val])));
+    utilisation.forEach((row, station) => row.forEach((val, hour) => data.push([hour, station, val])));
     return {
       tooltip: {
         position: "top",
-        formatter: (p: any) => `Station ${p.value[1]}\n${p.value[0]}:00 – ${(p.value[2] * 100).toFixed(0)}%`,
+        formatter: (params: any) => `Station ${params.value[1]}\n${params.value[0]}:00 – ${(params.value[2] * 100).toFixed(0)}%`,
       },
       xAxis: { type: "category", data: Array.from({ length: 24 }, (_, i) => `${i}:00`), splitArea: { show: true } },
       yAxis: { type: "category", data: utilisation.map((_, i) => `S${i}`), splitArea: { show: true } },
@@ -215,24 +251,39 @@ export default function DashboardView() {
       series: [{ name: "Utilisation", type: "heatmap", data, label: { show: false } }],
     };
   }, [utilisation]);
+
   return (
     <div className="dash-container">
-      {/* Top full‑width chart */}
-      <div className="dash-card">
-        <h3 className="dash-card-title">Grid Load vs Generation</h3>
-        <ReactECharts option={lineOption()} style={{ height: 400 }} />
+      {/*two‑column area */}
+      <div className="dash-two‑column-row">
+        <div className="dash-card">
+          <div className="dash-card-title">
+            Charging Session Counts
+            <Tooltip arrow title={SESSION_COUNTS_TOOLTIP}>
+              <InfoOutlinedIcon
+                fontSize="small"
+                sx={{ cursor: "pointer", color: "text.secondary" }}
+              />
+            </Tooltip>
+          </div>
+          <ReactECharts option={barCSCOption()} style={{ height: 360 }} />
+        </div>
+        {/* <div className="dash-card">
+          <div className="dash-card-title">Grid Load vs Generation</div>
+          <ReactECharts option={lineOption()} style={{ height: 400 }} />
+        </div> */}
       </div>
 
-      {/* Bottom two‑column area */}
-      <div className="dash-bottom-row">
-        <div className="dash-card">
-          <h3 className="dash-card-title">Charging Sessions &amp; Energy Delivered</h3>
-          <ReactECharts option={barOption()} style={{ height: 360 }} />
+      {/* two‑column area */}
+      <div className="dash-two‑column-row">
+        {/* <div className="dash-card">
+          <div className="dash-card-title">Energy Delivered</div>
+          <ReactECharts option={barEDOption()} style={{ height: 360 }} />
         </div>
         <div className="dash-card">
-          <h3 className="dash-card-title">Station-level Utilisation</h3>
+          <div className="dash-card-title">Station-level Utilisation</div>
           <ReactECharts option={heatOption()} style={{ height: 360 }} />
-        </div>
+        </div> */}
       </div>
     </div>
   );

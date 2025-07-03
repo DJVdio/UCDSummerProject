@@ -2,9 +2,9 @@
   "code": 200,
   "message": "OK",
   "data": {
-    "date": "2025-06-09",
+    "date": "2025-06-01T16:15Z",
     "timezone": "Europe/Dublin",
-    "generation_consumption": {
+    "generation_gridload": {
       "unit": "kW",
       "data": [
         { "time": "2025-06-09T00:00:00Z", "generation_kw": 420, "gridload_kw": 390 },

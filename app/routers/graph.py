@@ -1,18 +1,21 @@
-from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
+from fastapi import APIRouter, Depends
 
 from database import get_db
-from schemas.response import Response
-from server.graph import get_charging_counts, get_city_energy
+from server.graph import charging_sessions_counts, city_energy
+from util.response import Response
+
 
 router = APIRouter()
 
 @router.get("/charging_sessions_counts")
-def charging_counts_api(city_id: str, db: Session = Depends(get_db)):
-    data = get_charging_counts(city_id, db)
-    return Response.ok(data)
+
+def charging_sessions_counts_api(city_id, start_time, end_time, db: Session = Depends(get_db)):
+    result = charging_sessions_counts(city_id, start_time, end_time, db)
+    return Response.ok(result)
 
 @router.get("/city_energy")
-def city_energy_api(db: Session = Depends(get_db)):
-    data = get_city_energy(db)
-    return Response.ok(data)
+def city_energy_api(city_id, start_time, end_time, db: Session = Depends(get_db)):
+    result = city_energy(city_id, start_time, end_time, db)
+    return Response.ok(result)
+

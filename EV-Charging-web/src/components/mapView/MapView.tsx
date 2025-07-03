@@ -1,4 +1,5 @@
 import { useEffect, useState, useRef } from 'react';
+import { parseISO, format } from 'date-fns';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css'
 import { MapContainer, TileLayer, Marker, CircleMarker, Popup, FeatureGroup, GeoJSON } from 'react-leaflet';
@@ -83,12 +84,21 @@ export default function MapView() {
     setError(null);
     async function getMarkersData() {
       try {
-        const res = await getMapMarkers();
+        const isoTime = new Date(timePoint.replace(' ', 'T'))
+          .toISOString()
+          // .slice(0, 10);
+          .slice(0, 19) + 'Z';
+        // const isoTime = new Date(timePoint).toISOString().slice(0, 10);
+        const res = await getMapMarkers(currentLocationId, isoTime);
+        // mock
+        // const res = await getMapMarkers();
+        console.log(res, isoTime, res.data, 'map.res')
         // Processing timePoint format (e.g. ‘2025-06-01 18:15’ to ISO)
         // const key = timePoint.includes(' ')
         //   ? `${timePoint.replace(' ', 'T')}:00Z`
         //   : timePoint;
-        let pts = res.data[timePoint] || [];
+        let pts = res.data[isoTime] || [];
+        console.log(pts, 'pts')
         // console.log('pts', res.data, timePoint)
         setMarkers(pts);
       } catch (err) {
@@ -109,7 +119,7 @@ export default function MapView() {
         // 若启用自定义区域并已绘制多边形，则过滤
         // if (isCustomRegionEnabled && polygonGeoJson) {
           // TODO: 引入 turf.booleanPointInPolygon 进行空间过滤
-          // pts = pts.filter(pt => booleanPointInPolygon(L.latLng(pt.lat, pt.lng), polygonGeoJson));
+          // pts = pts.filter(pt => booleanPointInPolygon(L.latLng(pt.lat, pt.lon), polygonGeoJson));
         // }
       // const dataForDate = mockMarkersByDate[timePoint] ?? [];
       // TODO: 用 turf.booleanPointInPolygon 之类的方法筛一遍
@@ -176,20 +186,20 @@ export default function MapView() {
           />
         )} */}
         {markers.map((marker) => {
-          const { lat, lng, power_kW, popupInfo } = marker;
+          const { lat, lon, power_kW, popupInfo } = marker;
           const radius = power_kW <= 50 ? 4 : power_kW <= 150 ? 8 : 10;
 
           const statusColor =
-            popupInfo.status === 'available'
-              ? '#00FF00'
-              : popupInfo.status === 'occupied'
-              ? '#FF4500'
-              : '#000000';
+            popupInfo.status === 'AVAILABLE'
+              ? '#059669'
+              : popupInfo.status === 'OCCUPIED'
+              ? '#B91C1C'
+              : '#475569';
 
           return (
             <CircleMarker
-              key={`circle-${lat}-${lng}-${popupInfo.id}`}
-              center={[lat, lng]}
+              key={`circle-${lat}-${lon}-${popupInfo.id}`}
+              center={[lat, lon]}
               radius={radius}
               pathOptions={{
                 color: statusColor,
@@ -201,7 +211,7 @@ export default function MapView() {
         })}
         <MarkerClusterGroup>
           {markers.map((marker) => {
-            const { lat, lng, popupInfo, power_kW } = marker;
+            const { lat, lon, popupInfo, power_kW } = marker;
             // size of png 
             const iconWidth = 30;
             const iconHeight = 30;
@@ -218,18 +228,18 @@ export default function MapView() {
             });
             return (
               <Marker
-                key={`marker-${lat}-${lng}-${popupInfo.id}`}
-                position={[lat, lng]}
+                key={`marker-${lat}-${lon}-${popupInfo.id}`}
+                position={[lat, lon]}
                 icon={customIcon}
               >
                 <Popup>
-                  <div style={{ fontSize: 14, lineHeight: 1.4 }}>
-                    <strong>ID:</strong> {popupInfo.id} <br />
-                    <strong>Name:</strong> {popupInfo.name} <br />
-                    <strong>Power:</strong> {marker.power_kW} kW <br />
-                    <strong>Type:</strong> {marker.connectorType}<br />
-                    <strong>Status:</strong> {popupInfo.status} <br />
-                    <strong>Last&nbsp;Updated:</strong> {popupInfo.lastUpdated}
+                  <div className='station_content' style={{ fontSize: 14, lineHeight: 1.4 }}>
+                    <span className='popItem'>ID:</span> {popupInfo.id} <br />
+                    <span className='popItem'>Name:</span> {popupInfo.name} <br />
+                    {/* <span className='popItem'>Power:</span> {marker.power_kW} kW <br /> */}
+                    <span className='popItem'>Type:</span> {marker.popupInfo.type}<br />
+                    <span className='popItem'>Status:</span> {popupInfo.status} <br />
+                    <span className='popItem'>Last&nbsp;Updated:</span> {format(parseISO(popupInfo.lastUpdated), 'yyyy-MM-dd HH:mm:ss')}
                   </div>
                 </Popup>
               </Marker>
@@ -241,6 +251,7 @@ export default function MapView() {
       <div className='legend-content'>
         <Fade
           in={isLegendOpen}
+          unmountOnExit
         >
           <div className='legend-card'>
             <IconButton
@@ -250,19 +261,33 @@ export default function MapView() {
             >
               <CloseIcon fontSize="small" />
             </IconButton>
-            <div className='legend-kw'>
-              <div className='kw-detail'> &lt; 50 KW low power </div>
-              <div className='kw-detail'>50–150 kW mid-power </div>
-              <div className='kw-detail'>&gt; 150 kW high power</div>
-            </div>
+            {/* <div className='legend-kw'>
+              <div className='kw-detail kw-detail-high'>
+                high power
+              </div>
+              <div className='kw-detail kw-detail-mid'>
+                mid power
+              </div>
+              <div className='kw-detail kw-detail-low'>
+                low power
+              </div>
+            </div> */}
             <div className='legend-status'>
               <div className='status-detail available'>
                 <span className='status-icon'></span>
                 <span className='status-text'>Available</span>
               </div>
-              <div className='status-detail occupied'>              
+              {/* <div className='status-detail charging'>              
                 <span className='status-icon'></span>
-                <span className='status-text'>Occupied</span>
+                <span className='status-text'>Charging</span>
+              </div>
+              <div className='status-detail paused'>
+                <span className='status-icon'></span>
+                <span className='status-text'>Paused</span>
+              </div> */}
+              <div className='status-detail occpuied'>
+                <span className='status-icon'></span>
+                <span className='status-text'>Occpuied</span>
               </div>
               <div className='status-detail offline'>
                 <span className='status-icon'></span>
