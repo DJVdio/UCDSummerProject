@@ -1,3 +1,4 @@
+
 from datetime import timedelta, datetime, timezone
 from typing import List, Dict
 
@@ -205,3 +206,4 @@ def format_energy_result(date_str: str, hourly_energy: dict) -> dict:
             "data": energy_data
         }
     }
+
