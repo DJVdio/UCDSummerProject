@@ -5,7 +5,7 @@ from typing import List, Dict
 from sqlalchemy import func, and_
 from sqlalchemy.orm import Session
 
-from models import StationStatus
+from models import StationStatus, GridMetric
 from server.charging_stations import get_by_city_id
 from util.time_process import parse_datetime, process_start_end_time
 
@@ -207,3 +207,47 @@ def format_energy_result(date_str: str, hourly_energy: dict) -> dict:
         }
     }
 
+def grid_generation_vs_load(start_time: str, end_time: str, db: Session):
+    try:
+        parsed_start, parsed_end = process_start_end_time(start_time, end_time)
+    except ValueError as e:
+        raise ValueError(f"Invalid datetime format: {str(e)}")
+
+    naive_start = parsed_start.astimezone(timezone.utc).replace(tzinfo=None)
+    naive_end = parsed_end.astimezone(timezone.utc).replace(tzinfo=None)
+
+
+
+    # 聚合每小时的generation与load
+    data = db.query(
+        func.date_trunc('hour', GridMetric.timestamp).label('hour'),
+        GridMetric.metric_type,
+        func.avg(GridMetric.value_mw).label('avg_mw')
+    ).filter(
+        GridMetric.timestamp >= naive_start,
+        GridMetric.timestamp < naive_end,
+        GridMetric.metric_type.in_(["generation", "load"])
+    ).group_by('hour', GridMetric.metric_type).order_by('hour').all()
+
+    # 整理为结构化数据
+    hourly_data = {}
+    for hour, mtype, value in data:
+        if hour not in hourly_data:
+            hourly_data[hour] = {"generation_mw": 0.0, "load_mw": 0.0}
+        if mtype == "generation":
+            hourly_data[hour]["generation_mw"] = round(value, 2)
+        elif mtype == "load":
+            hourly_data[hour]["load_mw"] = round(value, 2)
+
+    return {
+        "start_time": start_time,
+        "end_time": end_time,
+        "timezone": "Europe/Dublin",
+        "grid_energy": [
+            {
+                "time": hour.replace(tzinfo=timezone.utc).isoformat(),
+                **values
+            }
+            for hour, values in sorted(hourly_data.items())
+        ]
+    }
