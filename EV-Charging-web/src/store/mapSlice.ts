@@ -15,6 +15,10 @@ interface MapState {
   isCustomRegionEnabled: boolean;
   loading: boolean;
   error?: string;
+  connectorTypes: string[]; // charging station
+  powerRange: [number, number];
+  availableConnectorTypes: string[];
+  powerLimits: [number, number];
 }
 
 const initialState: MapState = {
@@ -27,6 +31,10 @@ const initialState: MapState = {
   ],
   isCustomRegionEnabled: false,
   loading: false,
+  connectorTypes: [], 
+  powerRange: [0, 350],
+  availableConnectorTypes: [],
+  powerLimits: [0, 350],
 };
 
 export const fetchCities = createAsyncThunk<
@@ -65,6 +73,31 @@ const mapSlice = createSlice({
     setCustomRegionEnabled(state, action: PayloadAction<boolean>) {
       state.isCustomRegionEnabled = action.payload;
     },
+    // 用户选择的连接器类型
+    setConnectorTypes(state, action: PayloadAction<string[]>) {
+      state.connectorTypes = action.payload;
+    },
+    // 用户选择的功率区间
+    setPowerRange(state, action: PayloadAction<[number, number]>) {
+      state.powerRange = action.payload;
+    },
+    // 动态设置可用连接器类型（由接口数据生成） 
+    setAvailableConnectorTypes(state, action: PayloadAction<string[]>) {
+      state.availableConnectorTypes = action.payload;
+      // 如果当前选中的类型在新列表里不存在，需要重置已选列表
+      state.connectorTypes = state.connectorTypes.filter(t => action.payload.includes(t));
+    },
+    // 动态设置可用功率极值 [min, max]（由接口数据生成） 
+    setPowerLimits(state, action: PayloadAction<[number, number]>) {
+      state.powerLimits = action.payload;
+      // 如果当前筛选范围超出新极值，进行裁剪
+      const [min, max] = action.payload;
+      const [curMin, curMax] = state.powerRange;
+      state.powerRange = [
+        Math.max(curMin, min),
+        Math.min(curMax, max),
+      ];
+    },
   },
   extraReducers: (builder) => {
     builder
@@ -83,5 +116,12 @@ const mapSlice = createSlice({
   },
 });
 
-export const { setLocation, setCustomRegionEnabled } = mapSlice.actions;
+export const {
+  setLocation,
+  setCustomRegionEnabled,
+  setConnectorTypes, 
+  setPowerRange, 
+  setAvailableConnectorTypes,
+  setPowerLimits,
+} = mapSlice.actions;
 export default mapSlice.reducer;

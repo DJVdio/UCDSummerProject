@@ -4,6 +4,8 @@ import L from 'leaflet';
 import 'leaflet/dist/leaflet.css'
 import { MapContainer, TileLayer, Marker, CircleMarker, Popup, FeatureGroup, GeoJSON } from 'react-leaflet';
 import { getMapMarkers, EVMarker } from './../../api/map';
+import { useAppDispatch } from '../../hooks';
+import { setAvailableConnectorTypes, setPowerLimits } from './../../store/mapSlice';
 import { Fade, IconButton, Fab } from '@mui/material'
 import CloseIcon from '@mui/icons-material/Close';
 import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined';
@@ -37,6 +39,7 @@ export default function MapView() {
   const [error, setError] = useState<string | null>(null);
   // store makers from backend
   const [markers, setMarkers] = useState<EVMarker[]>([]);
+  const dispatch = useAppDispatch();
 
   // // 当用户画完一个多边形或者矩形时
   const _onCreated = (e: any) => {
@@ -93,7 +96,6 @@ export default function MapView() {
         // mock
         // const res = await getMapMarkers();
         console.log(res, isoTime, res.data, 'map.res')
-        // Processing timePoint format (e.g. ‘2025-06-01 18:15’ to ISO)
         // const key = timePoint.includes(' ')
         //   ? `${timePoint.replace(' ', 'T')}:00Z`
         //   : timePoint;
@@ -101,6 +103,12 @@ export default function MapView() {
         console.log(pts, 'pts')
         // console.log('pts', res.data, timePoint)
         setMarkers(pts);
+        const types = Array.from(new Set(pts.map(p => p.popupInfo.type))).sort();
+        const powers = pts.map(p => p.power_kW);
+        const minPower = Math.min(...powers);
+        const maxPower = Math.max(...powers);
+        dispatch(setAvailableConnectorTypes(types));
+        // dispatch(setPowerLimits([minPower, maxPower]));
       } catch (err) {
         console.error('Failed to load charging post data', err);
         setError('Failed to load charging post data, please try again later.');

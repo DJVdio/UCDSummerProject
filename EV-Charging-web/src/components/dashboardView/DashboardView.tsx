@@ -40,6 +40,8 @@ infrastructure deployment.`;
 
 export default function DashboardView() {
   const [genCon, setGenCon] = useState<GenerationConsumptionPoint[]>([]);
+  // const { currentLocationId, locations, isCustomRegionEnabled } =
+  //   useAppSelector(s => s.map);
   const { currentLocationId, locations, isCustomRegionEnabled } =
     useAppSelector(s => s.map);
   const { timeRange } = useAppSelector(s => s.time);
@@ -274,10 +276,10 @@ export default function DashboardView() {
           </div>
           <ReactECharts option={barCSCOption()} style={{ height: 360 }} />
         </div>
-        {/* <div className="dash-card">
+        <div className="dash-card">
           <div className="dash-card-title">Grid Load vs Generation</div>
           <ReactECharts option={lineOption()} style={{ height: 400 }} />
-        </div> */}
+        </div>
       </div>
 
       {/* two‑column area */}
