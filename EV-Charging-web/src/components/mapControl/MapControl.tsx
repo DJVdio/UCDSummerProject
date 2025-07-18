@@ -118,7 +118,7 @@ export default function MapControl() {
             </Select>
           </FormControl>
           <FormControl size="small" className="type-select">
-            <InputLabel id="connector-label">Connector</InputLabel>
+            <InputLabel id="connector-label">Type</InputLabel>
             <Select
               labelId="connector-label"
               multiple

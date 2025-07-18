@@ -17,6 +17,10 @@
     width: 100px;
     margin: 0 40px 0 0;
   }
+  .type-select {
+    width: 100px;
+    margin: 0 40px 0 0;
+  }
   .time-box {
     margin: 0 20px 0 80px;
     flex: 1;
