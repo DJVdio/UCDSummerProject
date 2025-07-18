@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { FormControl, InputLabel, Select, MenuItem, FormControlLabel, Switch } from '@mui/material';
+import { FormControl, InputLabel, Select, MenuItem, FormControlLabel, Switch, Checkbox, ListItemText, SelectChangeEvent } from '@mui/material';
 import {
   LocalizationProvider, 
   DateTimePicker,
@@ -7,8 +7,8 @@ import {
 } from '@mui/x-date-pickers';
 import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
 import { useAppDispatch, useAppSelector } from './../../hooks';
-import { setTimePoint } from './../../store/timeSlice';
-import { fetchCities, setLocation, setCustomRegionEnabled } from './../../store/mapSlice';
+import { setTimeEnd } from './../../store/timeSlice';
+import { fetchCities, setLocation, setCustomRegionEnabled, setConnectorTypes } from './../../store/mapSlice';
 import './MapControl.css'
 
 const MIN_ALLOWED = new Date(2025, 5, 20, 0, 0, 0, 0);
@@ -16,10 +16,18 @@ const isBeforeDay = (date: Date) => date < MIN_ALLOWED;
 
 export default function MapControl() {
   const dispatch = useAppDispatch();
-  const { locations, currentLocationId, isCustomRegionEnabled } =
+  const { 
+    locations,
+    currentLocationId,
+    isCustomRegionEnabled,
+    availableConnectorTypes,
+    powerLimits,
+    connectorTypes,
+    powerRange,
+  } =
     useAppSelector(s => s.map);
   const { timePoint } = useAppSelector(s => s.time);
-  // console.log(locations, currentLocationId, currentTime);
+  console.log(availableConnectorTypes, 'availableConnectorTypes');
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
   // date invalid
   const [isInvalid, setIsInvalid] = useState(false);
@@ -33,7 +41,10 @@ export default function MapControl() {
   const handleLocationChange = (locId: string) => {
     dispatch(setLocation(locId));
   };
-
+  const handleConnectorChange = (e: SelectChangeEvent<string[]>) => {
+    const val = e.target.value as string[];
+    dispatch(setConnectorTypes(val));
+  };
   useEffect(() => {
     dispatch(fetchCities());
   }, [dispatch]);
@@ -49,7 +60,7 @@ export default function MapControl() {
         `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())} ` +
         `${pad(now.getHours())}:${pad(now.getMinutes())}`;
 
-      dispatch(setTimePoint(dateString));
+      dispatch(setTimeEnd(dateString));
     } else {
       const d = new Date(timePoint);
       if (!isNaN(d.getTime())) {
@@ -76,7 +87,7 @@ export default function MapControl() {
     const dateString = `${year}-${month}-${day} ${hours}:${minutes}`;
 
     // dispatch to Redux
-    dispatch(setTimePoint(dateString));
+    dispatch(setTimeEnd(dateString));
   };
 
   return (
@@ -106,7 +117,23 @@ export default function MapControl() {
               ))}
             </Select>
           </FormControl>
-
+          <FormControl size="small" className="type-select">
+            <InputLabel id="connector-label">Type</InputLabel>
+            <Select
+              labelId="connector-label"
+              multiple
+              value={connectorTypes}
+              onChange={handleConnectorChange}
+              renderValue={selected => (selected as string[]).join(', ')}
+            >
+              {availableConnectorTypes.map(type => (
+                <MenuItem key={type} value={type}>
+                  <Checkbox checked={connectorTypes.includes(type)} />
+                  <ListItemText primary={type} />
+                </MenuItem>
+              ))}
+            </Select>
+          </FormControl>
           {/* —— Use Custom Region Switch —— */}
           {/* <FormControlLabel
             control={

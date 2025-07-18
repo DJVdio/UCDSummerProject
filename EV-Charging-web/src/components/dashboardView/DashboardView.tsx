@@ -40,9 +40,11 @@ infrastructure deployment.`;
 
 export default function DashboardView() {
   const [genCon, setGenCon] = useState<GenerationConsumptionPoint[]>([]);
+  // const { currentLocationId, locations, isCustomRegionEnabled } =
+  //   useAppSelector(s => s.map);
   const { currentLocationId, locations, isCustomRegionEnabled } =
     useAppSelector(s => s.map);
-  const { timePoint } = useAppSelector(s => s.time);
+  const { timeRange } = useAppSelector(s => s.time);
   const [sessions, setSessions] = useState<SessionPoint[]>([]);
   const [energy, setEnergy] = useState<EnergyPoint[]>([]);
   const [utilisation, setUtilisation] = useState<number[][]>([]);
@@ -51,6 +53,12 @@ export default function DashboardView() {
   const [error, setError] = useState<string | null>(null);
   // get data of three chart
   useEffect(() => {
+    if (!timeRange.timeStart || !timeRange.timeEnd) return;
+    setLoading(true);
+    setError(null);
+
+    const startIsoTime = new Date(timeRange.timeStart).toISOString().slice(0, 19) + 'Z';
+    const endIsoTime   = new Date(timeRange.timeEnd).toISOString().slice(0, 19) + 'Z';
     // get generation/consumption
     async function getGenerationGridloadData() {
       try {
@@ -75,12 +83,12 @@ export default function DashboardView() {
     // get charging sessions counts
     async function getSessionCountsData() {
       try {
-        const isoTime = new Date(timePoint.replace(' ', 'T'))
-          .toISOString()
+        // const isoTime = new Date(timePoint.replace(' ', 'T'))
+          // .toISOString()
           // .slice(0, 10);
-          .slice(0, 19) + 'Z';
+          // .slice(0, 19) + 'Z';
         // const isoTime = new Date(timePoint).toISOString().slice(0, 10);  
-        const res = await getSessionCounts(currentLocationId, isoTime);
+        const res = await getSessionCounts(currentLocationId, startIsoTime, endIsoTime);
         // console.log(res, 'getSessionCounts')
         const arr = res.data.charging_sessions.data.map((data) => ({
           time: data.time,
@@ -100,7 +108,7 @@ export default function DashboardView() {
     // get Energy Delivered
     async function getEnergyDeliveredData() {
       try {
-        const res = await getEnergyDelivered();
+        const res = await getEnergyDelivered(currentLocationId, startIsoTime, endIsoTime);
         console.log(res, 'getEnergyDeliveredData')
         const arr = res.data.energy_delivered.data.map((d) => ({
           time: d.time,
@@ -138,7 +146,7 @@ export default function DashboardView() {
       }
     }
     getUtilisation()
-  }, [currentLocationId, timePoint]);
+  }, [currentLocationId, timeRange.timeStart, timeRange.timeEnd]);
 
   const lineOption = useCallback(
     () => ({
@@ -268,19 +276,19 @@ export default function DashboardView() {
           </div>
           <ReactECharts option={barCSCOption()} style={{ height: 360 }} />
         </div>
-        {/* <div className="dash-card">
+        <div className="dash-card">
           <div className="dash-card-title">Grid Load vs Generation</div>
           <ReactECharts option={lineOption()} style={{ height: 400 }} />
-        </div> */}
+        </div>
       </div>
 
       {/* two‑column area */}
       <div className="dash-two‑column-row">
-        {/* <div className="dash-card">
+        <div className="dash-card">
           <div className="dash-card-title">Energy Delivered</div>
           <ReactECharts option={barEDOption()} style={{ height: 360 }} />
         </div>
-        <div className="dash-card">
+        {/* <div className="dash-card">
           <div className="dash-card-title">Station-level Utilisation</div>
           <ReactECharts option={heatOption()} style={{ height: 360 }} />
         </div> */}

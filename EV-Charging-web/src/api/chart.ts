@@ -9,6 +9,8 @@ const EV = createService(BASE_URL);
 const EV_MOCK = createService(BASE_URL_MOCK);
 
 // http://35.205.60.141:8000/graph/charging_sessions_counts?city_id=dublin&datetime=2025-06-20T19:30Z
+// localhost:8000/graph/city_energy?city_id=dublin&start_time=2025-06-24T00:15Z&end_time=2025-06-24T12:15Z
+// localhost:8000/graph/charging_sessions_counts?city_id=dublin&start_time=2025-06-24T00:15Z&end_time=2025-06-24T12:15Z
 
 /**
  * get chart data
@@ -54,7 +56,8 @@ export interface EnergyDeliveredPayload {
 }
 export const getSessionCounts = async (
   cityId: string,
-  datetime: string
+  start_time: string,
+  end_time: string,
 ): Promise<
   ChartResponse<SessionCountsPayload>
 > => {
@@ -63,19 +66,30 @@ export const getSessionCounts = async (
     {
       params: {
         city_id: cityId,
-        datetime
+        start_time,
+        end_time
       }
     }
   );
   return resp.data;
 };
 
-
-export const getEnergyDelivered = async (): Promise<
+export const getEnergyDelivered = async (
+  cityId: string,
+  start_time: string,
+  end_time: string,
+): Promise<
   ChartResponse<EnergyDeliveredPayload>
 > => {
-  const resp = await EV_MOCK.get<ChartResponse<EnergyDeliveredPayload>>(
-    "/energyDelivered.mock.json"
+  const resp = await EV.get<ChartResponse<EnergyDeliveredPayload>>(
+    "/graph/city_energy",
+    {
+      params: {
+        city_id: cityId,
+        start_time,
+        end_time
+      }
+    }
   );
   return resp.data;
 };
