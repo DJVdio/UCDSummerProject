@@ -108,7 +108,7 @@ export default function DashboardView() {
     // get Energy Delivered
     async function getEnergyDeliveredData() {
       try {
-        const res = await getEnergyDelivered(currentLocationId, startIsoTime, endIsoTime);
+        const res = await getEnergyDelivered(startIsoTime, endIsoTime);
         console.log(res, 'getEnergyDeliveredData')
         const arr = res.data.energy_delivered.data.map((d) => ({
           time: d.time,

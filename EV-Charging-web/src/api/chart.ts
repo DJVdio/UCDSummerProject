@@ -75,17 +75,15 @@ export const getSessionCounts = async (
 };
 
 export const getEnergyDelivered = async (
-  cityId: string,
   start_time: string,
   end_time: string,
 ): Promise<
   ChartResponse<EnergyDeliveredPayload>
 > => {
   const resp = await EV.get<ChartResponse<EnergyDeliveredPayload>>(
-    "/graph/city_energy",
+    "/graph/grid_energy",
     {
       params: {
-        city_id: cityId,
         start_time,
         end_time
       }

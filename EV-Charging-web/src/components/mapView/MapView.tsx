@@ -28,8 +28,8 @@ export default function MapView() {
   const { currentLocationId, locations, isCustomRegionEnabled, connectorTypes, powerRange } =
     useAppSelector(s => s.map);
   const { timePoint } = useAppSelector(s => s.time);
-  // store GeoJSON Polygon
-  const [polygonGeoJson, setPolygonGeoJson] = useState<GeoJSON.Geometry | null>(null);
+  // store regionGeoJson
+  const [regionGeoJson, setRegionGeoJson] = useState<GeoJSON.Geometry | null>(null);
   // control legend
   const [isLegendOpen, setLegendOpen] = useState(true);
   // when isCustomRegionEnabled = false, Clear polygons from the map
@@ -51,44 +51,46 @@ export default function MapView() {
       return markerTypes.some(t => connectorTypes.includes(t));
     });
   }, [markers, connectorTypes]);
-  // 当用户画完一个多边形或者矩形时
+  // 当用户画完一个矩形时
+  /** 处理绘制完成事件 —— 只会收到矩形（Polygon） */
   const _onCreated = (e: any) => {
     const layer = e.layer;
-    // Leaflet 的 layer.toGeoJSON() 一定会返回一个 Feature 对象
-    const feature = layer.toGeoJSON() as GeoJSON.Feature<GeoJSON.Polygon, GeoJSON.GeoJsonProperties>;
+    const feature = layer.toGeoJSON() as GeoJSON.Feature<
+      GeoJSON.Polygon,
+      GeoJSON.GeoJsonProperties
+    >;
     const geometry = feature.geometry;
 
-    // 先把以前的 shape 清掉（可选逻辑）
+    // 保证只保留一个绘制区域
     if (featureGroupRef.current) {
       const fg = featureGroupRef.current as any;
       fg.clearLayers();
       fg.addLayer(layer);
     }
 
-    // 更新到 state
-    setPolygonGeoJson(geometry);
-  }
+    setRegionGeoJson(geometry);
+  };
 
   // // User deletes an existing polygon
   const _onDeleted = () => {
-    setPolygonGeoJson(null);
+    setRegionGeoJson(null);
     setMarkers([]); // clear all ev charging
   };
 
   // if isCustomRegionEnabled = false, clear the drawing layer and set polygonGeoJson to null
   useEffect(() => {
     if (!isCustomRegionEnabled) {
-      // clear all polygon
       if (featureGroupRef.current) {
         featureGroupRef.current.clearLayers();
       }
-      setPolygonGeoJson(null);
+      setRegionGeoJson(null);
     }
   }, [isCustomRegionEnabled]);
 
   // request data of mock when isCustomRegionEnabled = false
   useEffect(() => {
-    if (!timePoint || !currentLocationId) {
+    // if (isCustomRegionEnabled) return;
+    if (!timePoint || !currentLocationId || isCustomRegionEnabled) {
       setMarkers([]);
       console.log('currentTime or currentLocationId is empty')
       return;
@@ -128,12 +130,15 @@ export default function MapView() {
       }
     }
 
-    getMarkersData();
+    if (!isCustomRegionEnabled) {
+      getMarkersData();
+    }
   }, [isCustomRegionEnabled, currentLocationId, timePoint]);
 
   // request data of mock when isCustomRegionEnabled = true
   useEffect(() => {
-    if (isCustomRegionEnabled && polygonGeoJson && timePoint) {
+    if (isCustomRegionEnabled && regionGeoJson && timePoint) {
+      console.log('request data with regionGeoJson')
       // 把 { geometry: polygonGeoJson, date: currentTime } 发给后端
         // 若启用自定义区域并已绘制多边形，则过滤
         // if (isCustomRegionEnabled && polygonGeoJson) {
@@ -150,7 +155,7 @@ export default function MapView() {
     } else {
       console.log('err in request data of mock when isCustomRegionEnabled = false')
     }
-  }, [isCustomRegionEnabled, polygonGeoJson, timePoint]);
+  }, [isCustomRegionEnabled, regionGeoJson, timePoint]);
 
   // current location
   const center: LatLngExpression =
@@ -169,8 +174,8 @@ export default function MapView() {
           attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
           url='https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png'
         />
-        {/* —— 如果自定义区域功能打开，就放一个可编辑的 FeatureGroup + EditControl —— */}
-        {/* {isCustomRegionEnabled && (
+        {/* —— 自定义区域绘制 —— */}
+        {isCustomRegionEnabled && (
           <FeatureGroup ref={featureGroupRef}>
             {featureGroupRef.current && (
               <EditControl
@@ -178,16 +183,14 @@ export default function MapView() {
                 onCreated={_onCreated}
                 onDeleted={_onDeleted}
                 draw={{
-                  rectangle: false,
+                  rectangle: {
+                    shapeOptions: { color: '#f357a1', weight: 4 },
+                  },
                   circle: false,
                   circlemarker: false,
                   marker: false,
                   polyline: false,
-                  polygon: {
-                    allowIntersection: false,
-                    showArea: false,
-                    shapeOptions: { color: '#f357a1', weight: 4 },
-                  },
+                  polygon: false,
                 }}
                 edit={{
                   featureGroup: featureGroupRef.current,
@@ -196,13 +199,11 @@ export default function MapView() {
               />
             )}
           </FeatureGroup>
-        )} */}
-        {/** —— 如果用户画了 polygon，把它再渲染一次 —— **/}
-        {/* {polygonGeoJson && (
-          <GeoJSON
-            data={polygonGeoJson}
-            style={{ color: 'blue', weight: 2, fillOpacity: 0.1 }}
-          />
+        )}
+
+        {/* —— 绘制完成后回显矩形 —— */}
+        {/* {regionGeoJson && (
+          <GeoJSON data={regionGeoJson} style={{ color: 'blue', weight: 2, fillOpacity: 0.1 }} />
         )} */}
         {displayedMarkers.map((marker) => {
           const { lat, lon, power_kW, popupInfo } = marker;
