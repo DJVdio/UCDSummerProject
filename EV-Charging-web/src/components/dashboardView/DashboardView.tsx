@@ -62,13 +62,13 @@ export default function DashboardView() {
     // get generation/consumption
     async function getGenerationGridloadData() {
       try {
-        const res = await getGenerationGridload();
+        const res = await getGenerationGridload(startIsoTime, endIsoTime);
         console.log(res.data, 'dash res of gene')
-        const arr = res.data.generation_gridload.data.map(d => ({
+        const arr = res.data.grid_energy.data.map(d => ({
           // console.log(d)
           time: d.time,
           generation: d.generation_kw,
-          grid_load: d.gridload_kw,
+          grid_load: d.load_mw,
         }));
         setGenCon(arr);
       } catch (err) {
@@ -108,7 +108,7 @@ export default function DashboardView() {
     // get Energy Delivered
     async function getEnergyDeliveredData() {
       try {
-        const res = await getEnergyDelivered(startIsoTime, endIsoTime);
+        const res = await getEnergyDelivered(currentLocationId, startIsoTime, endIsoTime);
         console.log(res, 'getEnergyDeliveredData')
         const arr = res.data.energy_delivered.data.map((d) => ({
           time: d.time,
@@ -276,18 +276,18 @@ export default function DashboardView() {
           </div>
           <ReactECharts option={barCSCOption()} style={{ height: 360 }} />
         </div>
-        <div className="dash-card">
+        {/* <div className="dash-card">
           <div className="dash-card-title">Grid Load vs Generation</div>
           <ReactECharts option={lineOption()} style={{ height: 400 }} />
+        </div> */}
+        <div className="dash-card">
+          <div className="dash-card-title">Energy Delivered</div>
+          <ReactECharts option={barEDOption()} style={{ height: 360 }} />
         </div>
       </div>
 
       {/* two‑column area */}
       <div className="dash-two‑column-row">
-        <div className="dash-card">
-          <div className="dash-card-title">Energy Delivered</div>
-          <ReactECharts option={barEDOption()} style={{ height: 360 }} />
-        </div>
         {/* <div className="dash-card">
           <div className="dash-card-title">Station-level Utilisation</div>
           <ReactECharts option={heatOption()} style={{ height: 360 }} />

@@ -1,0 +1,32 @@
+
+.dash-container {
+  flex: 1;
+  display: grid;
+  gap: 16px;
+  padding: 16px;
+}
+.dash-two‑column-row {
+    /* display: grid; */
+    gap: 16px;
+}
+.dash-card {
+  background: #fff;
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
+  padding: 16px;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, .05);
+}
+.dash-card-title {
+  margin: 0 0 12px;
+  font-size: 1rem;
+  font-weight: 600;
+  line-height: 1.4;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+@media (min-width: 960px) {
+  .dash-bottom-row {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}

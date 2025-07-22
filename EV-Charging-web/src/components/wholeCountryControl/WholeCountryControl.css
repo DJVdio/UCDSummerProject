@@ -1,0 +1,23 @@
+/* src/components/mapView/MapControl.css */
+.control-wrapper {
+  position: sticky;
+  top: 0;
+  z-index: 1100;
+  background: #fff;
+  padding: 16px;
+  box-shadow: 0 2px 6px rgba(0,0,0,.05);
+  .control-content {
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+  }
+  .location-select {
+    width: 100px;
+    margin: 0 40px 0 0;
+  }
+  .time-box {
+    margin: 0 20px 0 80px;
+    flex: 1;
+  }
+}
