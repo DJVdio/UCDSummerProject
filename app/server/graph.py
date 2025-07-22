@@ -251,3 +251,7 @@ def grid_generation_vs_load(start_time: str, end_time: str, db: Session):
             for hour, values in sorted(hourly_data.items())
         ]
     }
+
+
+def station_utilisation(city_id: str, start_time: str, end_time: str, db: Session):
+    return None

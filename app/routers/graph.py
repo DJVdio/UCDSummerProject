@@ -2,7 +2,7 @@ from sqlalchemy.orm import Session
 from fastapi import APIRouter, Depends
 
 from database import get_db
-from server.graph import charging_sessions_counts, city_energy
+from server.graph import charging_sessions_counts, city_energy, station_utilisation
 from util.response import Response
 
 
@@ -25,4 +25,7 @@ def grid_energy_api(start_time: str, end_time: str, db: Session = Depends(get_db
     result = grid_generation_vs_load(start_time, end_time, db)
     return Response.ok(result)
 
-
+@router.get("/station_utilisation")
+def station_utilisation_api(city_id: str, start_time: str, end_time: str, db: Session = Depends(get_db)):
+    result = station_utilisation(city_id, start_time, end_time, db)
+    return Response.ok(result)
