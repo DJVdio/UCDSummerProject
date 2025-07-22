@@ -4,7 +4,7 @@ from typing import Dict, List
 from sqlalchemy import and_, func
 from sqlalchemy.orm import Session
 
-from models import StationStatus
+from models import StationStatus, City, ChargingStation
 from server.charging_stations import get_by_city_id
 from util.time_process import parse_datetime
 
@@ -99,3 +99,27 @@ def bulk_get_status(station_ids: List[str], parsed_datetime: datetime, db: Sessi
     return {status.station_id: status for status in results}
 
 
+def get_whole_country_map(db: Session):
+    results = (
+        db.query(
+            City.city_id,
+            City.label,
+            func.ST_X(City.center).label("lon"),
+            func.ST_Y(City.center).label("lat"),
+            func.count(ChargingStation.station_id).label("charging_station_count")
+        )
+        .join(ChargingStation, ChargingStation.city_id == City.city_id)
+        .group_by(City.city_id, City.label, City.center)
+        .all()
+    )
+
+    return [
+        {
+            "city_id": row.city_id,
+            "label": row.label,
+            "lon": row.lon,
+            "lat": row.lat,
+            "charging_station_count": row.charging_station_count
+        }
+        for row in results
+    ]
