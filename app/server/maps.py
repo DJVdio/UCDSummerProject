@@ -31,6 +31,7 @@ def get_map_by_city_and_time(city_id: str, datetime_str: str, db: Session) -> Di
                 "name": station.name,
                 "description": station.description,
                 "type": station.connector_type,
+                "power_rating": station.rated_power_kw,  # 新增字段
                 "status": None,
                 "lastUpdated": None
             }
@@ -52,6 +53,7 @@ def get_map_by_city_and_time(city_id: str, datetime_str: str, db: Session) -> Di
                     info["popupInfo"]["lastUpdated"] = status.timestamp.astimezone(timezone.utc).isoformat()
 
     return {original_datetime_str: station_info_list}
+
 
 
 def bulk_get_status(station_ids: List[str], parsed_datetime: datetime, db: Session) -> Dict[str, object]:
