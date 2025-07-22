@@ -6,6 +6,7 @@ import dayjs from "dayjs";
 import utc from "dayjs/plugin/utc";
 import { useAppSelector } from '../../hooks';
 import { getGenerationGridload, getSessionCounts, getEnergyDelivered, getStationUtilisation } from './../../api/chart';
+import IrelandCityMapView from './../../components/IrelandCityMapView/IrelandCityMapView'
 import "./WholeCountryView.css"
 
 interface GenerationConsumptionPoint {
@@ -92,14 +93,12 @@ export default function DashboardView() {
   );
 
   return (
-    <div className="dash-container">
-      {/*two‑column area */}
-      <div className="dash-two‑column-row">
-        <div className="dash-card">
-          <div className="dash-card-title">Grid Load vs Generation</div>
-          <ReactECharts option={lineOption()} style={{ height: 400 }} />
-        </div>
+    <div className="whole-container">
+      <div className="whole-card">
+        <div className="dash-card-title">Grid Load vs Generation</div>
+        <ReactECharts option={lineOption()} style={{ height: 400 }} />
       </div>
+      <IrelandCityMapView />
     </div>
   );
 }

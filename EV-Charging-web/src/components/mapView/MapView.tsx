@@ -2,6 +2,8 @@ import { useEffect, useState, useRef, useMemo } from 'react';
 import { parseISO, format } from 'date-fns';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css'
+import 'leaflet-draw/dist/leaflet.draw.css';
+import 'leaflet-draw/dist/leaflet.draw.js';
 import { MapContainer, TileLayer, Marker, CircleMarker, Popup, FeatureGroup, GeoJSON } from 'react-leaflet';
 import { getMapMarkers, EVMarker } from './../../api/map';
 import { useAppDispatch } from '../../hooks';
@@ -16,6 +18,7 @@ import {Icon} from 'leaflet';
 import type { LatLngExpression } from 'leaflet';
 import markerPng from './../../assets/marker.png';
 import './MapView.css'
+
 
 const customIcon = new Icon({
   iconUrl: markerPng,
@@ -177,34 +180,30 @@ export default function MapView() {
         {/* —— 自定义区域绘制 —— */}
         {isCustomRegionEnabled && (
           <FeatureGroup ref={featureGroupRef}>
-            {featureGroupRef.current && (
-              <EditControl
-                position="topright"
-                onCreated={_onCreated}
-                onDeleted={_onDeleted}
-                draw={{
-                  rectangle: {
-                    shapeOptions: { color: '#f357a1', weight: 4 },
-                  },
-                  circle: false,
-                  circlemarker: false,
-                  marker: false,
-                  polyline: false,
-                  polygon: false,
-                }}
-                edit={{
-                  featureGroup: featureGroupRef.current,
-                  remove: true,
-                }}
-              />
-            )}
+            <EditControl
+              position="topright"
+              onCreated={_onCreated}
+              onDeleted={_onDeleted}
+              draw={{
+                rectangle: { shapeOptions: { color: '#f357a1', weight: 4 } },
+                circle: false,
+                circlemarker: false,
+                marker: false,
+                polyline: false,
+                polygon: false,
+              }}
+              edit={{
+                featureGroup: featureGroupRef.current!, // 初次渲染时可能是 null，库内部会在下一帧拿到
+                remove: true,
+              }}
+            />
           </FeatureGroup>
         )}
 
         {/* —— 绘制完成后回显矩形 —— */}
-        {/* {regionGeoJson && (
+        {regionGeoJson && (
           <GeoJSON data={regionGeoJson} style={{ color: 'blue', weight: 2, fillOpacity: 0.1 }} />
-        )} */}
+        )}
         {displayedMarkers.map((marker) => {
           const { lat, lon, power_kW, popupInfo } = marker;
           const radius = power_kW <= 50 ? 4 : power_kW <= 150 ? 8 : 10;

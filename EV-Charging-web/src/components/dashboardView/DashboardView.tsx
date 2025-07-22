@@ -64,10 +64,10 @@ export default function DashboardView() {
       try {
         const res = await getGenerationGridload(startIsoTime, endIsoTime);
         console.log(res.data, 'dash res of gene')
-        const arr = res.data.grid_energy.data.map(d => ({
+        const arr = res.data.grid_energy.map(d => ({
           // console.log(d)
           time: d.time,
-          generation: d.generation_kw,
+          generation: d.generation_mw,
           grid_load: d.load_mw,
         }));
         setGenCon(arr);
