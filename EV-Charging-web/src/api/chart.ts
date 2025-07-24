@@ -23,19 +23,39 @@ export interface ChartResponse<T> {
 export interface GenConPayload {
   date: string;
   timezone: string;
-  generation_gridload: GenerationConsumption;
+  grid_energy: {
+    time: string;
+    generation_mw: number;
+    load_mw: number;
+  }[];
 }
-export interface GenerationConsumption {
-  // interval: string;
-  unit: string;
-  data: { time: string; generation_kw: number; gridload_kw: number }[];
-}
+// export interface GenerationConsumption {
+//   // interval: string;
+//   unit: string;
+//   data: { time: string; generation_mw: number; load_mw: number }[];
+// }
 
-export const getGenerationGridload = async ():
-  Promise<ChartResponse<GenConPayload>> => {
-  const resp = await EV_MOCK.get<ChartResponse<GenConPayload>>('/lineChart.mock.json');
-  return resp.data;    // 这是 { code, message, data: GenerationConsumption }
+export const getGenerationGridload = async (
+  start_time: string,
+  end_time: string,
+): Promise<
+  ChartResponse<GenConPayload>
+> => {
+  const resp = await EV.get<ChartResponse<GenConPayload>>(
+    "/graph/grid_energy",
+    {
+      params: {
+        start_time,
+        end_time
+      }
+    }
+  );
+  return resp.data;
 };
+//   Promise<ChartResponse<GenConPayload>> => {
+//   const resp = await EV_MOCK.get<ChartResponse<GenConPayload>>('/lineChart.mock.json'); // /graph/grid_energy
+//   return resp.data;    // 这是 { code, message, data: GenerationConsumption }
+// };
 
 export interface SessionCountsPayload {
   date: string;

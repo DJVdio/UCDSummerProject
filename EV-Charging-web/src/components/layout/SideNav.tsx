@@ -23,8 +23,8 @@ export default function SideNav({ width }: SideNavProps) {
 
   const menu = [
     { text: "Location", icon: <PlaceIcon />, to: "/" },
-    { text: "Dashboard", icon: <DashboardIcon />, to: "/Dashboard" },
-    // { text: "Charging Station Listing", icon: <TimelineIcon />, to: "/data-analysis" },
+    { text: "Dashboard", icon: <TimelineIcon />, to: "/Dashboard" },
+    { text: "National Data", icon: < DashboardIcon/>, to: "/data-analysis" },
   ];
   const isActivePath = (to: string) =>
     to === "/" ? pathname === "/" : pathname.startsWith(to);
