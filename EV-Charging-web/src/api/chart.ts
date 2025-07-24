@@ -130,8 +130,21 @@ export interface StationRow {
   }>;
 }
 
-export const getStationUtilisation = async ():
+export const getStationUtilisation = async (
+  cityId: string,
+  start_time: string,
+  end_time: string,
+):
   Promise<ChartResponse<StationUtilisation>> => {
-  const resp = await EV_MOCK.get<ChartResponse<StationUtilisation>>('/heatChart.mock.json');
+  const resp = await EV.get<ChartResponse<StationUtilisation>>(
+    "/graph/station_utilisation",
+    {
+      params: {
+        city_id: cityId,
+        start_time,
+        end_time
+      }
+    }
+  );
   return resp.data;
 };

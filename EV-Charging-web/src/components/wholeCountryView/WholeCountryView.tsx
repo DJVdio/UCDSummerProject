@@ -1,11 +1,10 @@
 import { useEffect, useState, useCallback } from "react";
 import ReactECharts from "echarts-for-react";
-import { Tooltip } from "@mui/material";
-import InfoOutlinedIcon from "@mui/icons-material/InfoOutlined";
+import IrelandCityMap from "./../../components/IrelandCityMapView/IrelandCityMapView"
 import dayjs from "dayjs";
 import utc from "dayjs/plugin/utc";
 import { useAppSelector } from '../../hooks';
-import { getGenerationGridload, getSessionCounts, getEnergyDelivered, getStationUtilisation } from './../../api/chart';
+import { getGenerationGridload } from './../../api/chart';
 import IrelandCityMapView from './../../components/IrelandCityMapView/IrelandCityMapView'
 import "./WholeCountryView.css"
 
@@ -94,11 +93,11 @@ export default function DashboardView() {
 
   return (
     <div className="whole-container">
+      <IrelandCityMap />
       <div className="whole-card">
         <div className="dash-card-title">Grid Load vs Generation</div>
         <ReactECharts option={lineOption()} style={{ height: 400 }} />
       </div>
-      <IrelandCityMapView />
     </div>
   );
 }

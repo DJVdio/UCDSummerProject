@@ -128,7 +128,7 @@ export default function DashboardView() {
     // get station utilisation
     async function getUtilisation() {
       try {
-        const res = await getStationUtilisation();
+        const res = await getStationUtilisation(currentLocationId, startIsoTime, endIsoTime);
         const stations = res.data.station_utilisation.stations;
         // 每个站点一行，24 小时对应 0～23 index
         const matrix = stations.map(st =>

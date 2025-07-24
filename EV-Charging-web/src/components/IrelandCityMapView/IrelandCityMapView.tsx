@@ -1,147 +1,84 @@
-// IrelandCityMapView.tsx
+
 import { useEffect, useState, useCallback } from "react";
 import ReactECharts from "echarts-for-react";
 import * as echarts from "echarts/core";
 import { MapChart } from "echarts/charts";
 import {
-  TitleComponent,
-  TooltipComponent,
-  VisualMapComponent
-} from "echarts/components";
-import { CanvasRenderer } from "echarts/renderers";
-import axios from "axios";
-
-// import "./IrelandCityMapView.css";   // 与之前保持同风格，自己按需扩展
-
-echarts.use([
-  MapChart,
-  TitleComponent,
   TooltipComponent,
   VisualMapComponent,
-  CanvasRenderer
-]);
+} from "echarts/components";
+import { CanvasRenderer } from "echarts/renderers";
 
-/** 城市充电量数据 */
-export interface CityCharge {
-  name: string;          // 与 geoJSON 中的 `properties.name` 保持一致
-  value: number;         // 充电量 / 会话数 / 能量，随你定义
+import irelandCounties from "./../../assets/ireland.json"; // ← 你的 GeoJSON
+
+echarts.use([MapChart, TooltipComponent, VisualMapComponent, CanvasRenderer]);
+echarts.registerMap("ireland-counties", irelandCounties as any);
+
+interface CountyDatum {
+  name: string;   // “Dublin” 等，必须与 GeoJSON properties.name 匹配
+  value: number;  // 业务量
 }
 
-/** 主组件 */
 export default function IrelandCityMapView() {
-  const [irelandMapJson, setIrelandMapJson] = useState<any | null>(null);
-  const [cityCharges, setCityCharges] = useState<CityCharge[]>([]);
-  const [loading, setLoading] = useState<boolean>(true);
-  const [error, setError] = useState<string | null>(null);
+  const [data, setData] = useState<CountyDatum[]>([]);
 
-  /** 1. 拉取 Ireland geoJSON（仅第一次加载） */
+  /* 拉取业务数据，可替换为真实接口 */
   useEffect(() => {
-    async function fetchGeoJson() {
-      try {
-        // 你可以把 geoJSON 放在 public/geo/ 下，也可改成远端 URL
-        const { data } = await axios.get("/geo/ireland.json");
-        echarts.registerMap("ireland", data);      // 向 echarts 注册地图
-        setIrelandMapJson(data);
-      } catch (e) {
-        console.error("Failed to load Ireland map", e);
-        setError("无法加载地图数据，请稍后重试。");
-      }
-    }
-    fetchGeoJson();
+    setData([
+      { name: "Dublin", value: 13150 },
+      { name: "Cork", value: 8200 },
+      { name: "Galway", value: 5400 },
+      { name: "Limerick", value: 4100 },
+      { name: "Waterford", value: 2800 },
+      // …其余 27 个郡
+    ]);
   }, []);
 
-  /** 2. 拉取各城市充电数据（示例用假数据，你可替换为后端接口） */
-  useEffect(() => {
-    async function fetchChargeData() {
-      setLoading(true);
-      try {
-        /* 
-          // 真实接口示例
-          const res = await getIrelandCityCharges(startIsoTime, endIsoTime);
-          setCityCharges(res.data);
-        */
-
-        // ——以下是假数据占位——
-        const mock: CityCharge[] = [
-          { name: "Dublin",    value: 14500 },
-          { name: "Cork",      value: 6200 },
-          { name: "Limerick",  value: 5100 },
-          { name: "Galway",    value: 4800 },
-          { name: "Waterford", value: 2300 },
-          { name: "Kilkenny",  value: 1900 },
-          { name: "Sligo",     value: 1300 }
-        ];
-        setCityCharges(mock);
-      } catch (e) {
-        console.error("Failed to load charge data", e);
-        setError("无法加载充电数据，请稍后重试。");
-      } finally {
-        setLoading(false);
-      }
-    }
-    fetchChargeData();
-  }, []);
-
-  /** 3. 生成 echarts option —— 保持与原代码一致的 useCallback 结构 */
-  const mapOption = useCallback(() => {
-    if (!irelandMapJson) return {};
+  /* ECharts 配置保持可读性，用 useCallback 避免重复计算 */
+  const option = useCallback(() => {
+    const max = Math.max(...data.map((d) => d.value), 1);
 
     return {
       tooltip: {
         trigger: "item",
-        formatter: (p: any) =>
-          `${p.name}<br/>充电量: ${p.value?.toLocaleString() ?? "N/A"}`
-      },
-      title: {
-        text: "Ireland – City EV Charging",
-        left: "center",
-        top: 10
+        formatter: ({ name, value }: any) =>
+          `${name}<br/>业务量: ${value ?? "—"}`,
       },
       visualMap: {
+        type: "continuous",
         min: 0,
-        max: Math.max(...cityCharges.map(c => c.value)) || 1,
+        max,
         left: "left",
-        bottom: "5%",
-        text: ["高", "低"],
-        realtime: false,
+        orient: "vertical",
+        text: ["多", "少"],
         calculable: true,
-        inRange: {
-          /** 颜色可以自定义；下面用三段式渐变 */
-          color: ["#99d18f", "#4db3ff", "#f8c23d"]
-        }
+        inRange: { color: ["#b3e5fc", "#0288d1"] },
       },
       series: [
         {
           type: "map",
-          map: "ireland",
-          roam: true,
-          zoom: 1.2,
+          map: "ireland-counties",
+          name: "Ireland Counties",
+          roam: false,
           label: {
             show: true,
-            fontSize: 10
+            fontSize: 10,
+            color: "#111",
           },
           emphasis: {
-            label: { color: "#000", fontWeight: "bold" },
-            itemStyle: { areaColor: "#ffd54f" }
+            label: { show: true, fontWeight: "bold" },
+            itemStyle: { areaColor: "#ffd54f" },
           },
-          data: cityCharges
-        }
-      ]
+          data,
+        },
+      ],
     };
-  }, [irelandMapJson, cityCharges]);
-
-  /** 4. 渲染 */
-  if (error) return <div className="dash-error">{error}</div>;
-  if (loading) return <div className="dash-loading">Loading…</div>;
+  }, [data]);
 
   return (
-    <div className="dash-container">
-      <div className="dash-card">
-        <div className="dash-card-title">
-          Ireland City Charging
-        </div>
-        <ReactECharts option={mapOption()} style={{ height: 600 }} />
-      </div>
+    <div className="dash-card">
+      <div className="dash-card-title">Ireland – County Business Volume</div>
+      <ReactECharts option={option()} style={{ height: 550 }} />
     </div>
   );
 }
