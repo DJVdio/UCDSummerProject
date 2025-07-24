@@ -124,6 +124,7 @@ export interface StationUtilisationData {
 }
 export interface StationRow {
   station_id: string;
+  station_name: string;
   data: Array<{
     timestamp: string;      // ISO string
     utilisation: number;    // 0～1

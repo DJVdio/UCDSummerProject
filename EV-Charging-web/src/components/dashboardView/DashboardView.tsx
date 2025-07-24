@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, useMemo } from "react";
 import ReactECharts from "echarts-for-react";
 import { Tooltip } from "@mui/material";
 import InfoOutlinedIcon from "@mui/icons-material/InfoOutlined";
@@ -46,7 +46,9 @@ export default function DashboardView() {
   const { timeRange } = useAppSelector(s => s.time);
   const [sessions, setSessions] = useState<SessionPoint[]>([]);
   const [energy, setEnergy] = useState<EnergyPoint[]>([]);
-  const [utilisation, setUtilisation] = useState<number[][]>([]);
+  const [stationIds, setStationIds] = useState<string[]>([]);
+  const [stationNameMap, setStationNameMap] = useState<Record<string, string>>({});
+  const [utilMatrix, setUtilMatrix] = useState<number[][]>([]);
   // use for api
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
@@ -113,7 +115,7 @@ export default function DashboardView() {
           time: d.time,
           energy: d.energy_kwh,
         }));
-        console.log(arr, 'getEnergyDeliveredData')
+        // console.log(arr, 'getEnergyDeliveredData')
         setEnergy(arr);
       } catch (err) {
         console.error('Failed to load EnergyDelivered data', err);
@@ -129,14 +131,24 @@ export default function DashboardView() {
       try {
         const res = await getStationUtilisation(currentLocationId, startIsoTime, endIsoTime);
         const stations = res.data.station_utilisation.stations;
-        // 每个站点一行，24 小时对应 0～23 index
-        const matrix = stations.map(st =>
-          st.data
-            // 按 timestamp 排序（如果后端乱序）
-            .sort((a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime())
-            .map(pt => pt.utilisation)
-        );
-        setUtilisation(matrix);
+        console.log(res, 'getUtilisation')
+        const ids = stations.map(st => st.station_id);
+        const matrix = stations.map((st) => {
+          const sum = Array(24).fill(0);
+          const cnt = Array(24).fill(0);
+
+          st.data.forEach((pt: { timestamp: string; utilisation: number }) => {
+            const h = dayjs.utc(pt.timestamp).hour(); // 保证按 UTC 小时聚合
+            sum[h] += pt.utilisation;
+            cnt[h] += 1;
+          });
+
+          return sum.map((v, i) => (cnt[i] ? v / cnt[i] : 0));
+        });
+
+        setStationIds(ids);
+        setStationNameMap(Object.fromEntries(stations.map(st => [st.station_id, st.station_name])));
+        setUtilMatrix(matrix);
       } catch (err) {
         console.error(err);
         setError('Failed to load site utilisation data');
@@ -243,21 +255,73 @@ export default function DashboardView() {
     }),
     [energy]
   );
-
-  const heatOption = useCallback(() => {
+  const displayIds = useMemo(
+    () => stationIds.map(id => (id.startsWith('S') ? id : `S${id}`)),
+    [stationIds]
+  );
+  const heatOption = useMemo(() => {
     const data: [number, number, number][] = [];
-    utilisation.forEach((row, station) => row.forEach((val, hour) => data.push([hour, station, val])));
+    utilMatrix.forEach((row, stationIdx) => {
+      row.forEach((val, hour) => {
+        data.push([hour, stationIdx, val]); // x=hour, y=stationIdx, value=util
+      });
+    });
+
     return {
+      grid: { top: 50, left: 150, right: 30, bottom: 60 },
       tooltip: {
         position: "top",
-        formatter: (params: any) => `Station ${params.value[1]}\n${params.value[0]}:00 – ${(params.value[2] * 100).toFixed(0)}%`,
+        formatter: (p: any) => {
+          const hour = String(p.value[0]).padStart(2, "0");
+          const rawId = stationIds[p.value[1]];
+          const showId = rawId.startsWith('S') ? rawId : `S${rawId}`;
+          const name = stationNameMap[rawId];
+          return `${showId}${name ? ` (${name})` : ""}<br/>${hour}:00 – ${(p.value[2] * 100).toFixed(0)}%`;
+        },
       },
-      xAxis: { type: "category", data: Array.from({ length: 24 }, (_, i) => `${i}:00`), splitArea: { show: true } },
-      yAxis: { type: "category", data: utilisation.map((_, i) => `S${i}`), splitArea: { show: true } },
-      visualMap: { min: 0, max: 1, calculable: true, orient: "horizontal", left: "center", bottom: 15 },
-      series: [{ name: "Utilisation", type: "heatmap", data, label: { show: false } }],
+      dataZoom: [
+        { type: 'slider', yAxisIndex: 0, right: 5, start: 0, end: 40, filterMode: 'weakFilter', }, // 右侧滑块
+        { type: 'inside', yAxisIndex: 0 },                              // 鼠标滚轮缩放
+      ],
+      xAxis: {
+        type: "category",
+        data: Array.from({ length: 24 }, (_, i) => `${String(i).padStart(2, "0")}:00`),
+        splitArea: { show: true },
+        axisTick: { alignWithLabel: true },
+      },
+      yAxis: {
+        type: "category",
+        data: displayIds,
+        axisLabel: {
+          interval: 0, 
+          formatter: (name: string) => (name.length > 20 ? name.slice(0, 20) + "…" : name),
+        },
+        splitArea: { show: true },
+      },
+      visualMap: {
+        min: 0,
+        max: 1,
+        calculable: true,
+        orient: "horizontal",
+        left: "center",
+        bottom: 10,
+      },
+      series: [
+        {
+          name: "Utilisation",
+          type: "heatmap",
+          data,
+          label: { show: false },
+          emphasis: {
+            itemStyle: {
+              shadowBlur: 10,
+              shadowColor: "rgba(0, 0, 0, 0.3)",
+            },
+          },
+        },
+      ],
     };
-  }, [utilisation]);
+  }, [utilMatrix, stationIds, stationNameMap]);
 
   return (
     <div className="dash-container">
@@ -305,7 +369,7 @@ export default function DashboardView() {
               />
             </Tooltip>
           </div>
-          <ReactECharts option={heatOption()} style={{ height: 360 }} />
+          <ReactECharts option={heatOption} style={{ height: 1200 }} />
         </div>
       </div>
     </div>
