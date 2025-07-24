@@ -31,12 +31,11 @@ interface EnergyPoint {
 
 dayjs.extend(utc);
 
-const SESSION_COUNTS_TOOLTIP = `Charging Session counts chart shows how many EV
-charging sessions started in each time slot during the day, derived from
-changes in station status logs. Helps city planners and operators understand
-the peak charging periods of EV users throughout the day. Provides a basis for
-time-of-use pricing, grid load forecasting, and optimisation of charging
-infrastructure deployment.`;
+const SESSION_COUNTS_TOOLTIP = `Displays the number of EV charging sessions derived from station status logs on the ESB Charge Point Map. `;
+
+const ENERTY_DELIVERED_TOOLTIP = `Represents the total energy (kWh) delivered during charging sessions, calculated from ESB status records`;
+
+const STATION_UTLISATION_TOOLTIP = `Indicates how frequently each charging station is in use based on ESB availability logs.`;
 
 export default function DashboardView() {
   const [genCon, setGenCon] = useState<GenerationConsumptionPoint[]>([]);
@@ -281,17 +280,33 @@ export default function DashboardView() {
           <ReactECharts option={lineOption()} style={{ height: 400 }} />
         </div> */}
         <div className="dash-card">
-          <div className="dash-card-title">Energy Delivered</div>
+          <div className="dash-card-title">
+            Energy Delivered
+            <Tooltip arrow title={ENERTY_DELIVERED_TOOLTIP}>
+              <InfoOutlinedIcon
+                fontSize="small"
+                sx={{ cursor: "pointer", color: "text.secondary" }}
+              />
+            </Tooltip>
+            </div>
           <ReactECharts option={barEDOption()} style={{ height: 360 }} />
         </div>
       </div>
 
       {/* two‑column area */}
       <div className="dash-two‑column-row">
-        {/* <div className="dash-card">
-          <div className="dash-card-title">Station-level Utilisation</div>
+        <div className="dash-card">
+          <div className="dash-card-title">
+            Station-level Utilisation
+            <Tooltip arrow title={STATION_UTLISATION_TOOLTIP}>
+              <InfoOutlinedIcon
+                fontSize="small"
+                sx={{ cursor: "pointer", color: "text.secondary" }}
+              />
+            </Tooltip>
+          </div>
           <ReactECharts option={heatOption()} style={{ height: 360 }} />
-        </div> */}
+        </div>
       </div>
     </div>
   );

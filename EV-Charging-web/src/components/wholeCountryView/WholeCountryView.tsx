@@ -1,11 +1,12 @@
 import { useEffect, useState, useCallback } from "react";
 import ReactECharts from "echarts-for-react";
+import { Tooltip } from "@mui/material";
+import InfoOutlinedIcon from "@mui/icons-material/InfoOutlined";
 import IrelandCityMap from "./../../components/IrelandCityMapView/IrelandCityMapView"
 import dayjs from "dayjs";
 import utc from "dayjs/plugin/utc";
 import { useAppSelector } from '../../hooks';
 import { getGenerationGridload } from './../../api/chart';
-import IrelandCityMapView from './../../components/IrelandCityMapView/IrelandCityMapView'
 import "./WholeCountryView.css"
 
 interface GenerationConsumptionPoint {
@@ -15,6 +16,8 @@ interface GenerationConsumptionPoint {
 }
 
 dayjs.extend(utc);
+
+const GRID_LOAD_TOOLTIP = `Shows real-time electricity demand and supply across Ireland, sourced from the EirGrid Smart Grid Dashboard. `;
 
 export default function DashboardView() {
   const [genCon, setGenCon] = useState<GenerationConsumptionPoint[]>([]);
@@ -95,7 +98,15 @@ export default function DashboardView() {
     <div className="whole-container">
       <IrelandCityMap />
       <div className="whole-card">
-        <div className="dash-card-title">Grid Load vs Generation</div>
+        <div className="dash-card-title">
+          Grid Load vs Generation
+            <Tooltip arrow title={GRID_LOAD_TOOLTIP}>
+              <InfoOutlinedIcon
+                fontSize="small"
+                sx={{ cursor: "pointer", color: "text.secondary" }}
+              />
+            </Tooltip>
+        </div>
         <ReactECharts option={lineOption()} style={{ height: 400 }} />
       </div>
     </div>
