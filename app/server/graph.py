@@ -1,8 +1,8 @@
-
+from collections import defaultdict
 from datetime import timedelta, datetime, timezone
 from typing import List, Dict
 
-from sqlalchemy import func, and_
+from sqlalchemy import func, and_, case
 from sqlalchemy.orm import Session
 
 from models import StationStatus, GridMetric
@@ -216,8 +216,6 @@ def grid_generation_vs_load(start_time: str, end_time: str, db: Session):
     naive_start = parsed_start.astimezone(timezone.utc).replace(tzinfo=None)
     naive_end = parsed_end.astimezone(timezone.utc).replace(tzinfo=None)
 
-
-
     # 聚合每小时的generation与load
     data = db.query(
         func.date_trunc('hour', GridMetric.timestamp).label('hour'),
@@ -254,4 +252,99 @@ def grid_generation_vs_load(start_time: str, end_time: str, db: Session):
 
 
 def station_utilisation(city_id: str, start_time: str, end_time: str, db: Session):
-    return None
+    try:
+        parsed_start, parsed_end = process_start_end_time(start_time, end_time)
+    except ValueError as e:
+        raise ValueError(f"Invalid datetime format: {str(e)}")
+
+    date = start_time
+
+    # 获取城市所有充电桩
+    charging_stations = get_by_city_id(city_id, db)
+    station_name_map = {station.station_id: station.name for station in charging_stations}
+    station_ids = list(station_name_map.keys())
+
+    if not station_ids:
+        return {
+            "date": date,
+            "timezone": "Europe/Dublin",
+            "station_utilisation": {
+                "unit": "ratio",
+                "stations": []
+            }
+        }
+
+    # --- 1. 取所有记录 & OCCUPIED 记录 ---
+    all_records = (
+        db.query(StationStatus.station_id, StationStatus.timestamp)
+        .filter(
+            StationStatus.station_id.in_(station_ids),
+            StationStatus.timestamp >= parsed_start,
+            StationStatus.timestamp < parsed_end
+        )
+        .order_by(StationStatus.station_id, StationStatus.timestamp)
+        .all()
+    )
+    occupied_records = (
+        db.query(StationStatus.station_id, StationStatus.timestamp)
+        .filter(
+            StationStatus.station_id.in_(station_ids),
+            StationStatus.status == "OCCUPIED",
+            StationStatus.timestamp >= parsed_start,
+            StationStatus.timestamp < parsed_end
+        )
+        .order_by(StationStatus.station_id, StationStatus.timestamp)
+        .all()
+    )
+
+    # --- 2. 统一使用 UTC-aware 的整点小时作为 key ---
+    # 初始化计数结构
+    all_counts = {sid: defaultdict(int) for sid in station_ids}
+    occ_counts = {sid: defaultdict(int) for sid in station_ids}
+
+    # 累加所有记录
+    for station_id, ts in all_records:
+        # 假设数据库存储 UTC-naive，先标记为 UTC，然后取小时
+        hour = ts.replace(tzinfo=timezone.utc).replace(minute=0, second=0, microsecond=0)
+        all_counts[station_id][hour] += 1
+
+    # 累加 OCCUPIED 记录
+    for station_id, ts in occupied_records:
+        hour = ts.replace(tzinfo=timezone.utc).replace(minute=0, second=0, microsecond=0)
+        occ_counts[station_id][hour] += 1
+
+    # --- 3. 生成每小时利用率 ---
+    stations_list = []
+
+    # 迭代器也用 UTC-aware 整点小时
+    current = parsed_start.astimezone(timezone.utc).replace(minute=0, second=0, microsecond=0)
+    end_hour = parsed_end.astimezone(timezone.utc).replace(minute=0, second=0, microsecond=0)
+
+    for station_id in station_ids:
+        data = []
+        hour = current
+        while hour < end_hour:
+            total = all_counts[station_id].get(hour, 0)
+            occ = occ_counts[station_id].get(hour, 0)
+            utilisation = occ / total if total > 0 else 0.0
+
+            data.append({
+                "timestamp": hour.isoformat(),
+                "utilisation": round(utilisation, 4)
+            })
+            hour += timedelta(hours=1)
+
+        stations_list.append({
+            "station_id": station_id,
+            "station_name": station_name_map[station_id],
+            "data": data
+        })
+
+    return {
+        "date": date,
+        "timezone": "Europe/Dublin",
+        "station_utilisation": {
+            "unit": "ratio",
+            "stations": stations_list
+        }
+    }
