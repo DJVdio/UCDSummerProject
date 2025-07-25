@@ -1,0 +1,5 @@
+.home_page_analysis {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}

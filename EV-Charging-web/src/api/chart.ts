@@ -149,3 +149,20 @@ export const getStationUtilisation = async (
   );
   return resp.data;
 };
+
+export interface WholeCountryMapRow {
+  city_id: string;
+  label: string;
+  lon: number;
+  lat: number;
+  charging_station_count: number;
+}
+
+export const getWholeCountryMap = async (): Promise<
+  ChartResponse<WholeCountryMapRow[]>
+> => {
+  const resp = await EV.get<ChartResponse<WholeCountryMapRow[]>>(
+    "/map/get_whole_country_map"
+  );
+  return resp.data;
+};

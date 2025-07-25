@@ -1,5 +1,4 @@
-
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useMemo } from "react";
 import ReactECharts from "echarts-for-react";
 import * as echarts from "echarts/core";
 import { MapChart } from "echarts/charts";
@@ -9,40 +8,56 @@ import {
 } from "echarts/components";
 import { CanvasRenderer } from "echarts/renderers";
 
-import irelandCounties from "./../../assets/ireland.json"; // ← 你的 GeoJSON
+import irelandCounties from "./../../assets/ireland.json";
+import {
+  getWholeCountryMap,
+  WholeCountryMapRow,
+} from './../../api/chart';
+import type { EChartsOption } from "echarts";
 
 echarts.use([MapChart, TooltipComponent, VisualMapComponent, CanvasRenderer]);
 echarts.registerMap("ireland-counties", irelandCounties as any);
 
 interface CountyDatum {
-  name: string;   // “Dublin” 等，必须与 GeoJSON properties.name 匹配
-  value: number;  // 业务量
+  name: string;   // 必须与 GeoJSON properties.name 匹配
+  value: number;  // charging_station_count
 }
 
 export default function IrelandCityMapView() {
   const [data, setData] = useState<CountyDatum[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError]   = useState<string | null>(null);
 
-  /* 拉取业务数据，可替换为真实接口 */
   useEffect(() => {
-    setData([
-      { name: "Dublin", value: 13150 },
-      { name: "Cork", value: 8200 },
-      { name: "Galway", value: 5400 },
-      { name: "Limerick", value: 4100 },
-      { name: "Waterford", value: 2800 },
-      // …其余 27 个郡
-    ]);
+    (async () => {
+      try {
+        setLoading(true);
+        setError(null);
+        const resp = await getWholeCountryMap();
+        // resp.data: WholeCountryMapRow[]
+        const mapped: CountyDatum[] = resp.data.map((d: WholeCountryMapRow) => ({
+          name: d.label,                         // ⚠️ 要与 GeoJSON 保持一致
+          value: d.charging_station_count,
+        }));
+        setData(mapped);
+      } catch (e: any) {
+        setError(e?.message ?? "failed to fetch");
+      } finally {
+        setLoading(false);
+      }
+    })();
   }, []);
 
-  /* ECharts 配置保持可读性，用 useCallback 避免重复计算 */
-  const option = useCallback(() => {
+  const option: EChartsOption = useMemo(() => {
     const max = Math.max(...data.map((d) => d.value), 1);
 
     return {
       tooltip: {
         trigger: "item",
-        formatter: ({ name, value }: any) =>
-          `${name}<br/>业务量: ${value ?? "—"}`,
+        formatter: (p: any) => {
+          const { name, value } = p;
+          return `${name}<br/>Charging stations: ${value ?? "—"}`;
+        },
       },
       visualMap: {
         type: "continuous",
@@ -58,15 +73,16 @@ export default function IrelandCityMapView() {
         {
           type: "map",
           map: "ireland-counties",
-          name: "Ireland Counties",
+          name: "Charging Stations",
           roam: false,
           label: {
             show: true,
             fontSize: 10,
             color: "#111",
+            formatter: (p: any) => `${p.name}\n${p.value ?? "—"}`,
           },
           emphasis: {
-            label: { show: true, fontWeight: "bold" },
+          label: { show: true, fontWeight: "bold" },
             itemStyle: { areaColor: "#ffd54f" },
           },
           data,
@@ -75,10 +91,19 @@ export default function IrelandCityMapView() {
     };
   }, [data]);
 
+  if (loading) {
+    return <div className="dash-card">Loading…</div>;
+  }
+  if (error) {
+    return <div className="dash-card text-red-500">Error: {error}</div>;
+  }
+
   return (
     <div className="dash-card">
-      <div className="dash-card-title">Ireland – County Business Volume</div>
-      <ReactECharts option={option()} style={{ height: 550 }} />
+      <div className="dash-card-title">
+        Ireland – County Charging Station Count
+      </div>
+      <ReactECharts option={option} style={{ height: 550 }} />
     </div>
   );
 }

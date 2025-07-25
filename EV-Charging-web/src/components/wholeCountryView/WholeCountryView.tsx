@@ -2,11 +2,12 @@ import { useEffect, useState, useCallback } from "react";
 import ReactECharts from "echarts-for-react";
 import { Tooltip } from "@mui/material";
 import InfoOutlinedIcon from "@mui/icons-material/InfoOutlined";
-import IrelandCityMap from "./../../components/IrelandCityMapView/IrelandCityMapView"
 import dayjs from "dayjs";
 import utc from "dayjs/plugin/utc";
 import { useAppSelector } from '../../hooks';
 import { getGenerationGridload } from './../../api/chart';
+import WholeCountryControl from "./../../components/wholeCountryControl/WholeCountryControl"
+
 import "./WholeCountryView.css"
 
 interface GenerationConsumptionPoint {
@@ -96,18 +97,33 @@ export default function DashboardView() {
 
   return (
     <div className="whole-container">
-      <IrelandCityMap />
       <div className="whole-card">
-        <div className="dash-card-title">
-          Grid Load vs Generation
+        <div className="dash-card-title with-controller">
+          <div className="title-left">
+            Grid Load vs Generation
             <Tooltip arrow title={GRID_LOAD_TOOLTIP}>
               <InfoOutlinedIcon
                 fontSize="small"
                 sx={{ cursor: "pointer", color: "text.secondary" }}
               />
             </Tooltip>
+          </div>
+
+          {/* 关键：把时间控件移进来，只影响这个图表 */}
+          <div className="title-right">
+            <WholeCountryControl />
+          </div>
         </div>
-        <ReactECharts option={lineOption()} style={{ height: 400 }} />
+
+        {error ? (
+          <div className="error-text">{error}</div>
+        ) : (
+          <ReactECharts
+            option={lineOption()}
+            style={{ height: 400 }}
+            showLoading={loading}
+          />
+        )}
       </div>
     </div>
   );
