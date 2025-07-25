@@ -5,8 +5,9 @@ import InfoOutlinedIcon from "@mui/icons-material/InfoOutlined";
 import dayjs from "dayjs";
 import utc from "dayjs/plugin/utc";
 import { useAppSelector } from '../../hooks';
-import { getGenerationGridload, getSessionCounts, getEnergyDelivered, getStationUtilisation } from './../../api/chart';
-import IrelandCityMapView from './../../components/IrelandCityMapView/IrelandCityMapView'
+import { getGenerationGridload } from './../../api/chart';
+import WholeCountryControl from "./../../components/wholeCountryControl/WholeCountryControl"
+
 import "./WholeCountryView.css"
 
 interface GenerationConsumptionPoint {
@@ -16,6 +17,8 @@ interface GenerationConsumptionPoint {
 }
 
 dayjs.extend(utc);
+
+const GRID_LOAD_TOOLTIP = `Shows real-time electricity demand and supply across Ireland, sourced from the EirGrid Smart Grid Dashboard. `;
 
 export default function DashboardView() {
   const [genCon, setGenCon] = useState<GenerationConsumptionPoint[]>([]);
@@ -95,10 +98,33 @@ export default function DashboardView() {
   return (
     <div className="whole-container">
       <div className="whole-card">
-        <div className="dash-card-title">Grid Load vs Generation</div>
-        <ReactECharts option={lineOption()} style={{ height: 400 }} />
+        <div className="dash-card-title with-controller">
+          <div className="title-left">
+            Grid Load vs Generation
+            <Tooltip arrow title={GRID_LOAD_TOOLTIP}>
+              <InfoOutlinedIcon
+                fontSize="small"
+                sx={{ cursor: "pointer", color: "text.secondary" }}
+              />
+            </Tooltip>
+          </div>
+
+          {/* 关键：把时间控件移进来，只影响这个图表 */}
+          <div className="title-right">
+            <WholeCountryControl />
+          </div>
+        </div>
+
+        {error ? (
+          <div className="error-text">{error}</div>
+        ) : (
+          <ReactECharts
+            option={lineOption()}
+            style={{ height: 400 }}
+            showLoading={loading}
+          />
+        )}
       </div>
-      <IrelandCityMapView />
     </div>
   );
 }

@@ -124,14 +124,45 @@ export interface StationUtilisationData {
 }
 export interface StationRow {
   station_id: string;
+  station_name: string;
   data: Array<{
     timestamp: string;      // ISO string
     utilisation: number;    // 0～1
   }>;
 }
 
-export const getStationUtilisation = async ():
+export const getStationUtilisation = async (
+  cityId: string,
+  start_time: string,
+  end_time: string,
+):
   Promise<ChartResponse<StationUtilisation>> => {
-  const resp = await EV_MOCK.get<ChartResponse<StationUtilisation>>('/heatChart.mock.json');
+  const resp = await EV.get<ChartResponse<StationUtilisation>>(
+    "/graph/station_utilisation",
+    {
+      params: {
+        city_id: cityId,
+        start_time,
+        end_time
+      }
+    }
+  );
+  return resp.data;
+};
+
+export interface WholeCountryMapRow {
+  city_id: string;
+  label: string;
+  lon: number;
+  lat: number;
+  charging_station_count: number;
+}
+
+export const getWholeCountryMap = async (): Promise<
+  ChartResponse<WholeCountryMapRow[]>
+> => {
+  const resp = await EV.get<ChartResponse<WholeCountryMapRow[]>>(
+    "/map/get_whole_country_map"
+  );
   return resp.data;
 };

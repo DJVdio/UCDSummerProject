@@ -6,8 +6,8 @@
   padding: 16px;
 }
 .dash-two‑column-row {
-    display: grid;
-    gap: 16px;
+  display: grid;
+  gap: 16px;
 }
 .dash-card {
   background: #fff;

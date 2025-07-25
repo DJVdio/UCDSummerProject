@@ -72,7 +72,7 @@ export default function TimeRangeController() {
             <InputLabel
               id="location-label"
               // if isCustomRegionEnabled is true, set color of Label is gray
-              style={{ color: isCustomRegionEnabled ? 'rgba(0, 0, 0, 0.38)' : undefined }}
+              // style={{ color: isCustomRegionEnabled ? 'rgba(0, 0, 0, 0.38)' : undefined }}
             >
               Location
             </InputLabel>
@@ -81,7 +81,7 @@ export default function TimeRangeController() {
               label="Location"
               value={currentLocationId}
               onChange={e => handleLocationChange(e.target.value as string)}
-              disabled={isCustomRegionEnabled}
+              // disabled={isCustomRegionEnabled}
             >
               {locations.map(location => (
                 <MenuItem key={location.id} value={location.id}>
