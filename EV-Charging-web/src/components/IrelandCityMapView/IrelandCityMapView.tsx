@@ -65,7 +65,7 @@ export default function IrelandCityMapView() {
         max,
         left: "left",
         orient: "vertical",
-        text: ["多", "少"],
+        text: ["More", "Less"],
         calculable: true,
         inRange: { color: ["#b3e5fc", "#0288d1"] },
       },
