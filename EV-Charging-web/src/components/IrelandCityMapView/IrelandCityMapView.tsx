@@ -19,7 +19,7 @@ echarts.use([MapChart, TooltipComponent, VisualMapComponent, CanvasRenderer]);
 echarts.registerMap("ireland-counties", irelandCounties as any);
 
 interface CountyDatum {
-  name: string;   // 必须与 GeoJSON properties.name 匹配
+  name: string;
   value: number;  // charging_station_count
 }
 
@@ -35,10 +35,13 @@ export default function IrelandCityMapView() {
         setError(null);
         const resp = await getWholeCountryMap();
         // resp.data: WholeCountryMapRow[]
-        const mapped: CountyDatum[] = resp.data.map((d: WholeCountryMapRow) => ({
-          name: d.label,                         // ⚠️ 要与 GeoJSON 保持一致
-          value: d.charging_station_count,
-        }));
+        const mapped: CountyDatum[] = resp.data.map((d: WholeCountryMapRow) => {
+          const n = Number(d.charging_station_count);
+          return {
+            name: d.label,
+            value: Number.isFinite(n) ? n : 0,
+          };
+        });
         setData(mapped);
       } catch (e: any) {
         setError(e?.message ?? "failed to fetch");
@@ -49,14 +52,16 @@ export default function IrelandCityMapView() {
   }, []);
 
   const option: EChartsOption = useMemo(() => {
-    const max = Math.max(...data.map((d) => d.value), 1);
+    const values = data.map(d => (Number.isFinite(d.value) ? d.value : 0));
+    const max = values.length ? Math.max(1, ...values) : 1;
 
     return {
       tooltip: {
         trigger: "item",
         formatter: (p: any) => {
           const { name, value } = p;
-          return `${name}<br/>Charging stations: ${value ?? "—"}`;
+          const v = Number.isFinite(value) ? value : 0;
+          return `${name}<br/>Charging stations: ${v}`;
         },
       },
       visualMap: {
@@ -79,7 +84,7 @@ export default function IrelandCityMapView() {
             show: true,
             fontSize: 10,
             color: "#111",
-            formatter: (p: any) => `${p.name}\n${p.value ?? "—"}`,
+            formatter: (p: any) => `${p.name}\n${Number.isFinite(p.value) ? p.value : 0}`,
           },
           emphasis: {
           label: { show: true, fontWeight: "bold" },
