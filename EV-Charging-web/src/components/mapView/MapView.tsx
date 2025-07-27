@@ -28,7 +28,7 @@ const customIcon = new Icon({
 
 export default function MapView() {
   // const { key: locationKey } = useLocation(); // setting the only key
-  const { currentLocationId, locations, isCustomRegionEnabled, connectorTypes, powerRange } =
+  const { currentLocationId, locations, isCustomRegionEnabled, connectorTypes, powerLimits, powerRange } =
     useAppSelector(s => s.map);
   const { timePoint } = useAppSelector(s => s.time);
   // store regionGeoJson
@@ -43,8 +43,23 @@ export default function MapView() {
   // store makers from backend
   const [markers, setMarkers] = useState<EVMarker[]>([]);
   const dispatch = useAppDispatch();
+  const [minP, maxP] = useMemo(() => {
+    if (Array.isArray(powerRange) && powerRange.length === 2) {
+      const a = Number(powerRange[0]);
+      const b = Number(powerRange[1]);
+      if (Number.isFinite(a) && Number.isFinite(b)) return [a, b];
+    }
+    return [20, 200];
+  }, [powerRange]);
   const displayedMarkers = useMemo(() => {
     return markers.filter(m => {
+      // 按power rating过滤
+      const rating = m?.popupInfo?.power_rating;
+      if (typeof rating !== 'number' || !Number.isFinite(rating)) return false;
+      const inPowerRange = rating >= minP && rating <= maxP;      
+      if (!inPowerRange) return false;
+      
+      // 按照接口类型过滤
       if (connectorTypes.length === 0) return true;
       console.log(m, 'm')
       const markerTypes = m.popupInfo.type
@@ -53,7 +68,7 @@ export default function MapView() {
 
       return markerTypes.some(t => connectorTypes.includes(t));
     });
-  }, [markers, connectorTypes]);
+  }, [markers, connectorTypes, minP, maxP]);
   // 当用户画完一个矩形时
   /** 处理绘制完成事件 —— 只会收到矩形（Polygon） */
   const _onCreated = (e: any) => {
@@ -118,9 +133,18 @@ export default function MapView() {
         console.log(pts, 'pts')
         // console.log('pts', res.data, timePoint)
         setMarkers(pts);
-        const types = Array.from(new Set(pts.map(p => p.popupInfo.type))).sort();
+        const SEP = /[,&/]/;
+
+        const types = Array.from(new Set(
+          pts.flatMap(p =>
+            String(p?.popupInfo?.type ?? '')
+              .split(SEP)
+              .map(t => t.trim())
+              .filter(Boolean)
+          )
+        )).sort();
         console.log(types, 'types')
-        const powers = pts.map(p => p.power_kW);
+        const powers = pts.map(p => p?.popupInfo?.power_rating).filter((n): n is number => typeof n === 'number' && Number.isFinite(n));
         const minPower = Math.min(...powers);
         const maxPower = Math.max(...powers);
         dispatch(setAvailableConnectorTypes(types));
@@ -230,12 +254,12 @@ export default function MapView() {
         })}
         <MarkerClusterGroup>
           {displayedMarkers.map((marker) => {
-            const { lat, lon, popupInfo, power_kW } = marker;
+            const { lat, lon, popupInfo } = marker;
             // size of png 
             const iconWidth = 30;
             const iconHeight = 30;
-
-            const radius = power_kW <= 50 ? 4 : power_kW <= 150 ? 8 : 10;
+            const rating = popupInfo.power_rating;
+            const radius = rating <= 50 ? 4 : rating <= 150 ? 8 : 10;
 
             const anchorX = iconWidth / 2;
             const anchorY = iconHeight - (radius/2);
@@ -255,7 +279,7 @@ export default function MapView() {
                   <div className='station_content' style={{ fontSize: 14, lineHeight: 1.4 }}>
                     <span className='popItem'>ID:</span> {popupInfo.id} <br />
                     <span className='popItem'>Name:</span> {popupInfo.name} <br />
-                    {/* <span className='popItem'>Power:</span> {marker.power_kW} kW <br /> */}
+                    <span className='popItem'>Power Rating:</span> {popupInfo.power_rating} kW <br />
                     <span className='popItem'>Type:</span> {marker.popupInfo.type}<br />
                     <span className='popItem'>Status:</span> {popupInfo.status} <br />
                     <span className='popItem'>Last&nbsp;Updated:</span> {format(parseISO(popupInfo.lastUpdated), 'yyyy-MM-dd HH:mm:ss')}
@@ -304,9 +328,9 @@ export default function MapView() {
                 <span className='status-icon'></span>
                 <span className='status-text'>Paused</span>
               </div> */}
-              <div className='status-detail occpuied'>
+              <div className='status-detail Occupied'>
                 <span className='status-icon'></span>
-                <span className='status-text'>Occpuied</span>
+                <span className='status-text'>Occupied</span>
               </div>
               <div className='status-detail offline'>
                 <span className='status-icon'></span>

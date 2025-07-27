@@ -8,7 +8,7 @@ import {
 import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
 import { useAppDispatch, useAppSelector } from './../../hooks';
 import { setTimeEnd } from './../../store/timeSlice';
-import { fetchCities, setLocation, setCustomRegionEnabled, setConnectorTypes } from './../../store/mapSlice';
+import { fetchCities, setLocation, setCustomRegionEnabled, setConnectorTypes, setPowerRange } from './../../store/mapSlice';
 import './MapControl.css'
 
 const MIN_ALLOWED = new Date(2025, 5, 20, 0, 0, 0, 0);
@@ -28,9 +28,20 @@ export default function MapControl() {
     useAppSelector(s => s.map);
   const { timePoint } = useAppSelector(s => s.time);
   console.log(availableConnectorTypes, 'availableConnectorTypes');
-  const [selectedDate, setSelectedDate] = useState<Date | null>(null);
+  const [selectedDate, setSelectedDate, ] = useState<Date | null>(null);
   // date invalid
   const [isInvalid, setIsInvalid] = useState(false);
+  const safeLimits: [number, number] =
+    (Array.isArray(powerLimits) && powerLimits.length === 2 &&
+     Number.isFinite(Number(powerLimits[0])) && Number.isFinite(Number(powerLimits[1])))
+    ? [Number(powerLimits[0]), Number(powerLimits[1])]
+    : [20, 200];
+  const ranges = [
+  { label: `All`, value: safeLimits },
+  { label: '22–50 kW',   value: [22, 50] as [number, number] },
+  { label: '51–150 kW',  value: [51, 150] as [number, number] },
+  { label: '151–200 kW', value: [151, 200] as [number, number] },
+];
 
   // users could choose geographic location
   const clickCustomRegionToggle = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -41,10 +52,17 @@ export default function MapControl() {
   const handleLocationChange = (locId: string) => {
     dispatch(setLocation(locId));
   };
+  // 类型选择
   const handleConnectorChange = (e: SelectChangeEvent<string[]>) => {
     const val = e.target.value as string[];
     dispatch(setConnectorTypes(val));
   };
+  // 功率选择
+  const handlePowerChange = (e: SelectChangeEvent<string>) => {
+  const next = JSON.parse(e.target.value) as [number, number];
+  console.log(next, 'next')
+  dispatch(setPowerRange(next));
+};
   useEffect(() => {
     dispatch(fetchCities());
   }, [dispatch]);
@@ -130,6 +148,23 @@ export default function MapControl() {
                 <MenuItem key={type} value={type}>
                   <Checkbox checked={connectorTypes.includes(type)} />
                   <ListItemText primary={type} />
+                </MenuItem>
+              ))}
+            </Select>
+          </FormControl>
+          {/* 功率下拉框 */}
+          <FormControl size="small" className="type-select">
+            <InputLabel id="power-label">Power</InputLabel>
+            <Select
+              labelId="power-label"
+              label="Power"
+              // Select 的 value 是字符串，使用 JSON 序列化当前区间
+              value={JSON.stringify(powerRange)}
+              onChange={handlePowerChange}
+            >
+              {ranges.map(r => (
+                <MenuItem key={r.label} value={JSON.stringify(r.value)}>
+                  <ListItemText primary={r.label} />
                 </MenuItem>
               ))}
             </Select>

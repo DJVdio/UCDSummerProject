@@ -18,7 +18,7 @@ interface MapState {
   connectorTypes: string[]; // charging station
   powerRange: [number, number];
   availableConnectorTypes: string[];
-  powerLimits: [number, number];
+  powerLimits: [number, number]; // 20 - 200
 }
 
 const initialState: MapState = {
@@ -32,9 +32,9 @@ const initialState: MapState = {
   isCustomRegionEnabled: false,
   loading: false,
   connectorTypes: [], 
-  powerRange: [0, 350],
+  powerRange: [20, 200],
   availableConnectorTypes: [],
-  powerLimits: [0, 350],
+  powerLimits: [20, 200],
 };
 
 export const fetchCities = createAsyncThunk<
@@ -49,7 +49,6 @@ export const fetchCities = createAsyncThunk<
       return rejectWithValue(res.message || 'Server error');
     }
     // console.log(res.data, 'res.data')
-    // 转成前端需要的字段
     return res.data.map(
       (item: CityApiItem): LocationOption => ({
         id:     item.city_id,
@@ -77,26 +76,29 @@ const mapSlice = createSlice({
     setConnectorTypes(state, action: PayloadAction<string[]>) {
       state.connectorTypes = action.payload;
     },
-    // 用户选择的功率区间
-    setPowerRange(state, action: PayloadAction<[number, number]>) {
-      state.powerRange = action.payload;
-    },
+
     // 动态设置可用连接器类型（由接口数据生成） 
     setAvailableConnectorTypes(state, action: PayloadAction<string[]>) {
       state.availableConnectorTypes = action.payload;
       // 如果当前选中的类型在新列表里不存在，需要重置已选列表
       state.connectorTypes = state.connectorTypes.filter(t => action.payload.includes(t));
     },
-    // 动态设置可用功率极值 [min, max]（由接口数据生成） 
     setPowerLimits(state, action: PayloadAction<[number, number]>) {
       state.powerLimits = action.payload;
-      // 如果当前筛选范围超出新极值，进行裁剪
+      // 边界变化时保证当前选中范围在边界内
       const [min, max] = action.payload;
-      const [curMin, curMax] = state.powerRange;
-      state.powerRange = [
-        Math.max(curMin, min),
-        Math.min(curMax, max),
-      ];
+      let [curMin, curMax] = state.powerRange;
+      curMin = Math.max(curMin, min);
+      curMax = Math.min(curMax, max);
+      if (curMin > curMax) {
+        curMin = min;
+        curMax = max;
+      }
+      state.powerRange = [curMin, curMax];
+    },
+
+    setPowerRange(state, action: PayloadAction<[number, number]>) {
+      state.powerRange = action.payload;
     },
   },
   extraReducers: (builder) => {
