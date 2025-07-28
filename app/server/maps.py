@@ -1,7 +1,7 @@
 from datetime import datetime, timezone
 from typing import Dict, List
 
-from sqlalchemy import and_, func
+from sqlalchemy import and_, func, select
 from sqlalchemy.orm import Session
 
 from models import StationStatus, City, ChargingStation
@@ -53,7 +53,6 @@ def get_map_by_city_and_time(city_id: str, datetime_str: str, db: Session) -> Di
                     info["popupInfo"]["lastUpdated"] = status.timestamp.astimezone(timezone.utc).isoformat()
 
     return {original_datetime_str: station_info_list}
-
 
 
 def bulk_get_status(station_ids: List[str], parsed_datetime: datetime, db: Session) -> Dict[str, object]:
@@ -123,3 +122,43 @@ def get_whole_country_map(db: Session):
         }
         for row in results
     ]
+
+# 复用了get_map_by_city_and_time的方法，会产生额外的性能开支，但是我懒，所以复用了之前的方法
+def get_cus_map(city_id: str,datetime_str: str,location1_wkb: str,location2_wkb: str,db: Session) -> Dict[str, List[dict]]:
+    # 1. 获取该城市和日期全部数据
+    full_map = get_map_by_city_and_time(city_id, datetime_str, db)
+    station_info_list = full_map.get(datetime_str, [])
+
+    # 2. 用 EWKB 解码取坐标
+    lon1 = db.execute(
+        select(func.ST_X(
+            func.ST_GeomFromEWKB(func.decode(location1_wkb, 'hex'))
+        ))
+    ).scalar_one()
+    lat1 = db.execute(
+        select(func.ST_Y(
+            func.ST_GeomFromEWKB(func.decode(location1_wkb, 'hex'))
+        ))
+    ).scalar_one()
+    lon2 = db.execute(
+        select(func.ST_X(
+            func.ST_GeomFromEWKB(func.decode(location2_wkb, 'hex'))
+        ))
+    ).scalar_one()
+    lat2 = db.execute(
+        select(func.ST_Y(
+            func.ST_GeomFromEWKB(func.decode(location2_wkb, 'hex'))
+        ))
+    ).scalar_one()
+
+    min_lon, max_lon = min(lon1, lon2), max(lon1, lon2)
+    min_lat, max_lat = min(lat1, lat2), max(lat1, lat2)
+
+    # 3. 过滤出在矩形内的站点
+    filtered = [
+        info for info in station_info_list
+        if min_lon <= info["lon"] <= max_lon
+           and min_lat <= info["lat"] <= max_lat
+    ]
+
+    return {datetime_str: filtered}
