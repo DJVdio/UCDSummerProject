@@ -46,6 +46,7 @@ export interface EVMarker {
 export interface PopupInfo {
   id: string;
   name: string;
+  power_rating: number;
   description: string;
   type: string;
   status: string;
