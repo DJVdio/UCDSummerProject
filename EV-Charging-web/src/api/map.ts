@@ -79,3 +79,22 @@ export const getMapMarkers = async (
   ); //  /map.mock.json
   return data;
 }
+
+// 获取用户自己绘制的矩形
+export const getMapMarkersByRect = async (
+  datetime: string,
+  location1: string,
+  location2: string
+): Promise<MapResponse> => {
+  const { data } = await EV.get<MapResponse>(
+    '/map/cus_map',
+    {
+      params: {
+        datetime,
+        location1,
+        location2,
+      },
+    }
+  );
+  return data;
+};
