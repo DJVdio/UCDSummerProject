@@ -5,7 +5,7 @@ import 'leaflet/dist/leaflet.css'
 import 'leaflet-draw/dist/leaflet.draw.css';
 import 'leaflet-draw/dist/leaflet.draw.js';
 import { MapContainer, TileLayer, Marker, CircleMarker, Popup, FeatureGroup, GeoJSON } from 'react-leaflet';
-import { getMapMarkers, EVMarker } from './../../api/map';
+import { getMapMarkers, EVMarker, getMapMarkersByRect } from './../../api/map';
 import { useAppDispatch } from '../../hooks';
 import { setAvailableConnectorTypes, setPowerLimits } from './../../store/mapSlice';
 import { Fade, IconButton, Fab } from '@mui/material'
@@ -43,6 +43,43 @@ export default function MapView() {
   // store makers from backend
   const [markers, setMarkers] = useState<EVMarker[]>([]);
   const dispatch = useAppDispatch();
+  /** GeoJSON Polygon（矩形）坐标转左上/右下角
+   *  GeoJSON 坐标顺序是 [lon, lat]
+   */
+  const getRectCornersFromPolygon = (polygon: GeoJSON.Polygon) => {
+    const ring = polygon.coordinates[0] as [number, number][];
+    let minLat = Infinity, maxLat = -Infinity, minLon = Infinity, maxLon = -Infinity;
+    for (const [lon, lat] of ring) {
+      if (lat < minLat) minLat = lat;
+      if (lat > maxLat) maxLat = lat;
+      if (lon < minLon) minLon = lon;
+      if (lon > maxLon) maxLon = lon;
+    }
+    return {
+      // 左上：西经（minLon），北纬（maxLat）
+      topLeft:  { lon: minLon, lat: maxLat },
+      // 右下：东经（maxLon），南纬（minLat）
+      bottomRight: { lon: maxLon, lat: minLat },
+    };
+  }
+
+  /** 把 lon/lat 编码成带 SRID(4326) 的 EWKB(HEX) POINT
+   *  结构（小端）：1字节byteOrder + 4字节type(0x20000001) + 4字节SRID + 8字节X(lon) + 8字节Y(lat)
+   */
+  const pointToEwkbHex = (lon: number, lat: number, srid = 4326): string => {
+    const buf = new ArrayBuffer(1 + 4 + 4 + 8 + 8);
+    const view = new DataView(buf);
+    let off = 0;
+    view.setUint8(off, 1); off += 1;                 // 1: little-endian
+    view.setUint32(off, 0x20000001, true); off += 4; // POINT + SRID flag
+    view.setUint32(off, srid, true); off += 4;       // SRID=4326
+    view.setFloat64(off, lon, true); off += 8;       // X = lon
+    view.setFloat64(off, lat, true);                 // Y = lat
+    const bytes = new Uint8Array(buf);
+    return Array.from(bytes, b => b.toString(16).padStart(2, '0')).join('');
+  }
+
+
   const [minP, maxP] = useMemo(() => {
     if (Array.isArray(powerRange) && powerRange.length === 2) {
       const a = Number(powerRange[0]);
@@ -88,7 +125,13 @@ export default function MapView() {
 
     setRegionGeoJson(geometry);
   };
-
+  // 编辑矩形后也能随时更新
+  const _onEdited = (e: any) => {
+    e.layers.eachLayer((layer: any) => {
+      const feature = layer.toGeoJSON() as GeoJSON.Feature<GeoJSON.Polygon, GeoJSON.GeoJsonProperties>;
+      setRegionGeoJson(feature.geometry);
+    });
+  };
   // // User deletes an existing polygon
   const _onDeleted = () => {
     setRegionGeoJson(null);
@@ -143,7 +186,7 @@ export default function MapView() {
               .filter(Boolean)
           )
         )).sort();
-        console.log(types, 'types')
+        // console.log(types, 'types')
         const powers = pts.map(p => p?.popupInfo?.power_rating).filter((n): n is number => typeof n === 'number' && Number.isFinite(n));
         const minPower = Math.min(...powers);
         const maxPower = Math.max(...powers);
@@ -162,27 +205,65 @@ export default function MapView() {
     }
   }, [isCustomRegionEnabled, currentLocationId, timePoint]);
 
-  // request data of mock when isCustomRegionEnabled = true
+  // request data when isCustomRegionEnabled = true
   useEffect(() => {
-    if (isCustomRegionEnabled && regionGeoJson && timePoint) {
-      console.log('request data with regionGeoJson')
-      // 把 { geometry: polygonGeoJson, date: currentTime } 发给后端
-        // 若启用自定义区域并已绘制多边形，则过滤
-        // if (isCustomRegionEnabled && polygonGeoJson) {
-          // TODO: 引入 turf.booleanPointInPolygon 进行空间过滤
-          // pts = pts.filter(pt => booleanPointInPolygon(L.latLng(pt.lat, pt.lon), polygonGeoJson));
-        // }
-      // const dataForDate = mockMarkersByDate[timePoint] ?? [];
-      // TODO: 用 turf.booleanPointInPolygon 之类的方法筛一遍
-      // const filtered = dataForDate.filter(pt => booleanPointInPolygon(point, polygonGeoJson));
-      // setMarkers(filtered);
-
-      // demo 暂时先不做空间过滤，直接返回所有
-      // setMarkers(dataForDate);
-    } else {
-      console.log('err in request data of mock when isCustomRegionEnabled = false')
+    if (!(isCustomRegionEnabled && regionGeoJson && timePoint && currentLocationId)) {
+      return;
     }
-  }, [isCustomRegionEnabled, regionGeoJson, timePoint]);
+
+    setLoading(true);
+    setError(null);
+
+    async function fetchCustomRegionMarkers() {
+      try {
+        // 与非自定义一致的时间格式化方式
+        const isoTime = new Date(timePoint.replace(' ', 'T'))
+          .toISOString()
+          .slice(0, 19) + 'Z';
+
+        // 取矩形左上/右下角
+        const { topLeft, bottomRight } = getRectCornersFromPolygon(regionGeoJson as GeoJSON.Polygon);
+
+        // 组装 EWKB HEX（POINT，带 SRID=4326）
+        const location1 = pointToEwkbHex(topLeft.lon, topLeft.lat);           // 左上
+        const location2 = pointToEwkbHex(bottomRight.lon, bottomRight.lat);   // 右下
+
+        // 调用后端 /map/cus_map
+        const res = await getMapMarkersByRect(currentLocationId, isoTime, location1, location2);
+        console.log(res, '/map/cus_map')
+
+        // 兼容两种 data 格式：数组 或 { [datetime]: EVMarker[] }
+        let pts: EVMarker[] = Array.isArray((res as any)?.data)
+          ? ((res as any).data as EVMarker[])
+          : ((res?.data?.[isoTime] as EVMarker[]) ?? []);
+
+        setMarkers(pts);
+
+        // 更新右侧筛选：可用的 connector types
+        const SEP = /[,&/]/;
+        const types = Array.from(new Set(
+          pts.flatMap(p =>
+            String(p?.popupInfo?.type ?? '')
+              .split(SEP)
+              .map(t => t.trim())
+              .filter(Boolean)
+          )
+        )).sort();
+
+        dispatch(setAvailableConnectorTypes(types));
+        // 若后端已返回功率的最小/最大值，也可在此更新 setPowerLimits
+        // dispatch(setPowerLimits([minPower, maxPower]));
+      } catch (err) {
+        console.error('Failed to load custom region data', err);
+        setError('Failed to load region data, please try again later.');
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    fetchCustomRegionMarkers();
+  }, [isCustomRegionEnabled, regionGeoJson, timePoint, currentLocationId, dispatch]);
+
 
   // current location
   const center: LatLngExpression =
@@ -207,6 +288,7 @@ export default function MapView() {
             <EditControl
               position="topright"
               onCreated={_onCreated}
+              onEdited={_onEdited}
               onDeleted={_onDeleted}
               draw={{
                 rectangle: { shapeOptions: { color: '#f357a1', weight: 4 } },
@@ -229,9 +311,9 @@ export default function MapView() {
           <GeoJSON data={regionGeoJson} style={{ color: 'blue', weight: 2, fillOpacity: 0.1 }} />
         )}
         {displayedMarkers.map((marker) => {
-          const { lat, lon, power_kW, popupInfo } = marker;
-          const radius = power_kW <= 50 ? 4 : power_kW <= 150 ? 8 : 10;
-
+          const { lat, lon, popupInfo } = marker;
+          const rating = popupInfo.power_rating;
+          const radius = rating <= 80 ? 8 : rating <= 150 ? 12 : 16;
           const statusColor =
             popupInfo.status === 'AVAILABLE'
               ? '#059669'
@@ -259,7 +341,7 @@ export default function MapView() {
             const iconWidth = 30;
             const iconHeight = 30;
             const rating = popupInfo.power_rating;
-            const radius = rating <= 50 ? 4 : rating <= 150 ? 8 : 10;
+            const radius = rating <= 80 ? 8 : rating <= 150 ? 12 : 16;
 
             const anchorX = iconWidth / 2;
             const anchorY = iconHeight - (radius/2);
@@ -304,7 +386,7 @@ export default function MapView() {
             >
               <CloseIcon fontSize="small" />
             </IconButton>
-            {/* <div className='legend-kw'>
+            <div className='legend-kw'>
               <div className='kw-detail kw-detail-high'>
                 high power
               </div>
@@ -314,7 +396,7 @@ export default function MapView() {
               <div className='kw-detail kw-detail-low'>
                 low power
               </div>
-            </div> */}
+            </div>
             <div className='legend-status'>
               <div className='status-detail available'>
                 <span className='status-icon'></span>

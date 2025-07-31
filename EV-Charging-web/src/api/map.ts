@@ -1,7 +1,7 @@
 import { createService } from '../utils/request';
 import type { LatLngExpression } from 'leaflet';
 
-const BASE_URL = "http://35.205.60.141:8000"; // backend import.meta.env.BASE_URL;
+const BASE_URL = "http://34.140.252.211:8000"; // backend import.meta.env.BASE_URL;
 const BASE_URL_MOCK = "http://localhost:5173"; // frontend
 
 // 创建 Axios 实例
@@ -79,3 +79,24 @@ export const getMapMarkers = async (
   ); //  /map.mock.json
   return data;
 }
+
+// 获取用户自己绘制的矩形
+export const getMapMarkersByRect = async (
+  city_id: string,
+  datetime: string,
+  location1: string,
+  location2: string
+): Promise<MapResponse> => {
+  const { data } = await EV.get<MapResponse>(
+    '/map/cus_map',
+    {
+      params: {
+        city_id,
+        datetime,
+        location1,
+        location2,
+      },
+    }
+  );
+  return data;
+};

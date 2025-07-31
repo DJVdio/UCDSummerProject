@@ -1,6 +1,6 @@
 import { createService } from '../utils/request';
 
-const BASE_URL = "http://35.205.60.141:8000"; // backend import.meta.env.BASE_URL;
+const BASE_URL = "http://34.140.252.211:8000"; // backend import.meta.env.BASE_URL;
 const BASE_URL_MOCK = "http://localhost:5173"; // frontend
 
 // 创建 Axios 实例

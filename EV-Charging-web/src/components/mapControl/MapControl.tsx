@@ -113,7 +113,7 @@ export default function MapControl() {
       <div className='control-content'>
         <div className='location-content'>
           {/* —— Location Select —— */}
-          <FormControl size="small" className="location-select">
+          <FormControl size="small" className="location-select select-box">
             <InputLabel
               id="location-label"
               // if isCustomRegionEnabled is true, set color of Label is gray
@@ -135,7 +135,7 @@ export default function MapControl() {
               ))}
             </Select>
           </FormControl>
-          <FormControl size="small" className="type-select">
+          <FormControl size="small" className="type-select select-box">
             <InputLabel id="connector-label">Type</InputLabel>
             <Select
               labelId="connector-label"
@@ -153,7 +153,7 @@ export default function MapControl() {
             </Select>
           </FormControl>
           {/* 功率下拉框 */}
-          <FormControl size="small" className="type-select">
+          <FormControl size="small" className="select-box">
             <InputLabel id="power-label">Power</InputLabel>
             <Select
               labelId="power-label"

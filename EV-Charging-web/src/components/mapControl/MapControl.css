@@ -7,11 +7,25 @@
   border-radius: 4px;
   padding: 12px;
   box-shadow: 0 2px 8px rgba(0,0,0,0.15);
-  .control-content {
+  /* .control-content {
     display: flex;
     flex-direction: row;
     justify-content: space-between;
     align-items: center;
+  } */
+  .select-box {          /* 三个下拉统一用这一个类 */
+    width: 150px;        /* 你想要的固定宽度 */
+    margin-right: 24px;  /* 盒子之间的间距，用 gap 也行 */
+  }
+
+  .select-box .MuiOutlinedInput-root {
+    height: 36px;        /* 统一高度，让下拉箭头也对齐 */
+    box-sizing: border-box;
+  }
+  .control-content {
+    display: flex;
+    align-items: center;
+    gap: 24px;           /* 不用再一个个写 margin */
   }
   .location-select {
     width: 100px;
