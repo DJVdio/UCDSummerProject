@@ -229,7 +229,7 @@ export default function MapView() {
         const location2 = pointToEwkbHex(bottomRight.lon, bottomRight.lat);   // 右下
 
         // 调用后端 /map/cus_map
-        const res = await getMapMarkersByRect(isoTime, location1, location2);
+        const res = await getMapMarkersByRect(currentLocationId, isoTime, location1, location2);
         console.log(res, '/map/cus_map')
 
         // 兼容两种 data 格式：数组 或 { [datetime]: EVMarker[] }
