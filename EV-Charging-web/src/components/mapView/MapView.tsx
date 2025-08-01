@@ -1,23 +1,22 @@
 import { useEffect, useState, useRef, useMemo } from 'react';
 import { parseISO, format } from 'date-fns';
-import L from 'leaflet';
-import 'leaflet/dist/leaflet.css'
-import 'leaflet-draw/dist/leaflet.draw.css';
-import 'leaflet-draw/dist/leaflet.draw.js';
+
 import { MapContainer, TileLayer, Marker, CircleMarker, Popup, FeatureGroup, GeoJSON } from 'react-leaflet';
+import { EditControl } from 'react-leaflet-draw';
+import MarkerClusterGroup from 'react-leaflet-cluster';
+
+import { Icon, type FeatureGroup as LeafletFeatureGroup, type LatLngExpression } from 'leaflet';
+
 import { getMapMarkers, EVMarker, getMapMarkersByRect } from './../../api/map';
-import { useAppDispatch } from '../../hooks';
-import { setAvailableConnectorTypes, setPowerLimits } from './../../store/mapSlice';
-import { Fade, IconButton, Fab } from '@mui/material'
+import { useAppDispatch, useAppSelector } from '../../hooks';
+import { setAvailableConnectorTypes /*, setPowerLimits*/ } from './../../store/mapSlice';
+
+import { Fade, IconButton, Fab } from '@mui/material';
 import CloseIcon from '@mui/icons-material/Close';
 import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined';
-import MarkerClusterGroup from 'react-leaflet-cluster'
-import { EditControl } from 'react-leaflet-draw';
-import { useAppSelector } from '../../hooks';
-import {Icon} from 'leaflet';
-import type { LatLngExpression } from 'leaflet';
+
 import markerPng from './../../assets/marker.png';
-import './MapView.css'
+import './MapView.css';
 
 
 const customIcon = new Icon({

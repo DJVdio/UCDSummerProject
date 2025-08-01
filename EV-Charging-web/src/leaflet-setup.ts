@@ -1,15 +1,13 @@
-/* src/leaflet-setup.ts ---------------------------------------- */
-import * as L from 'leaflet';
+// src/leaflet-setup.ts
+import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 
-// eslint-disable-next-line @typescript-eslint/ban-ts-comment
-// @ts-ignore
-window.L = L;
+(window as any).L = L;              // 供 UMD 插件扩展
 
-import 'leaflet-draw/dist/leaflet.draw.css';
-import 'leaflet-draw/dist/leaflet.draw.js';
-/* ------------------------------------------------------------- */
-
+// 先样式，再脚本
 import 'leaflet.markercluster/dist/MarkerCluster.css';
 import 'leaflet.markercluster/dist/MarkerCluster.Default.css';
-import 'leaflet.markercluster/dist/leaflet.markercluster.js';
+import 'leaflet.markercluster';      // 会给 window.L 挂 MarkerClusterGroup
+
+import 'leaflet-draw/dist/leaflet.draw.css';
+import 'leaflet-draw';               // 同理依赖 window.L
