@@ -5,7 +5,7 @@ import { MapContainer, TileLayer, Marker, CircleMarker, Popup, FeatureGroup, Geo
 import { EditControl } from 'react-leaflet-draw';
 import MarkerClusterGroup from 'react-leaflet-cluster';
 
-import { Icon, type FeatureGroup as LeafletFeatureGroup, type LatLngExpression } from 'leaflet';
+import { Icon, type PointTuple, type FeatureGroup as LeafletFeatureGroup, type LatLngExpression } from 'leaflet';
 
 import { getMapMarkers, EVMarker, getMapMarkersByRect } from './../../api/map';
 import { useAppDispatch, useAppSelector } from '../../hooks';
@@ -17,15 +17,45 @@ import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined';
 
 import ErrorSnackbar from '../../components/ErrorSnackbar/ErrorSnackbar';
 
-import markerPng from './../../assets/marker.png';
+// import markerPng from './../../assets/marker.png';
+import markerGreen from './../../assets/marker-green.png';
+import markerRed   from './../../assets/marker-red.png';
+import markerGrey  from './../../assets/marker-grey.png';
 import './MapView.css';
 
+const statusToIconUrl = (status?: string) => {
+  switch (status) {
+    case 'AVAILABLE': return markerGreen;  // 绿
+    case 'OCCUPIED':  return markerRed;    // 红
+    case 'OFFLINE':   return markerGrey;   // 灰
+    default:          return markerGreen;   // 兜底
+  }
+};
 
-const customIcon = new Icon({
-  iconUrl: markerPng,
-  iconSize: [38, 38],
-  iconAnchor: [19, 38],
-});
+// const customIcon = new Icon({
+//   iconUrl: markerPng,
+//   iconSize: [38, 38],
+//   iconAnchor: [19, 38],
+// });
+
+const createPngIcon = (
+  status?: string,
+  size = 30,
+  anchor: 'center' | 'bottom' = 'bottom' 
+) => {
+  const iconUrl = statusToIconUrl(status);
+
+  const iconSize: PointTuple = [size, size];
+  const iconAnchor: PointTuple =
+    anchor === 'bottom' ? [size / 2, size] : [size / 2, size / 2];
+
+  return new Icon({
+    iconUrl,
+    iconSize,
+    iconAnchor,
+    className: 'colored-ev-icon',
+  });
+};
 
 export default function MapView() {
   // const { key: locationKey } = useLocation(); // setting the only key
@@ -341,24 +371,24 @@ export default function MapView() {
           {displayedMarkers.map((marker) => {
             const { lat, lon, popupInfo } = marker;
             // size of png 
-            const iconWidth = 30;
-            const iconHeight = 30;
-            const rating = popupInfo.power_rating;
-            const radius = rating <= 80 ? 8 : rating <= 150 ? 12 : 16;
+            // const iconWidth = 30;
+            // const iconHeight = 30;
 
-            const anchorX = iconWidth / 2;
-            const anchorY = iconHeight - (radius/2);
+            const icon = createPngIcon(popupInfo.status, 34, 'bottom');
 
-            const customIcon = new Icon({
-              iconUrl: markerPng,
-              iconSize: [iconWidth, iconHeight],
-              iconAnchor: [anchorX, anchorY],
-            });
+            // const anchorX = iconWidth / 2;
+            // const anchorY = iconHeight - (radius/2);
+
+            // const customIcon = new Icon({
+            //   iconUrl: markerPng,
+            //   iconSize: [iconWidth, iconHeight],
+            //   iconAnchor: [anchorX, anchorY],
+            // });
             return (
               <Marker
                 key={`marker-${lat}-${lon}-${popupInfo.id}`}
                 position={[lat, lon]}
-                icon={customIcon}
+                icon={icon}
               >
                 <Popup>
                   <div className='station_content' style={{ fontSize: 14, lineHeight: 1.4 }}>
