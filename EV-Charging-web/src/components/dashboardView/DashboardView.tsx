@@ -6,6 +6,8 @@ import dayjs from "dayjs";
 import utc from "dayjs/plugin/utc";
 import { useAppSelector } from '../../hooks';
 import { getGenerationGridload, getSessionCounts, getEnergyDelivered, getStationUtilisation } from './../../api/chart';
+import ErrorSnackbar from '../../components/ErrorSnackbar/ErrorSnackbar';
+
 import "./DashboardView.css"
 
 interface GenerationConsumptionPoint {
@@ -372,6 +374,10 @@ export default function DashboardView() {
           <ReactECharts option={heatOption} style={{ height: 1200 }} />
         </div>
       </div>
+      <ErrorSnackbar
+        error={error}
+        onClose={() => setError(null)}
+      />
     </div>
   );
 }
