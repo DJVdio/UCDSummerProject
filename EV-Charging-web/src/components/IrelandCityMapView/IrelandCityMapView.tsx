@@ -6,6 +6,8 @@ import {
   TooltipComponent,
   VisualMapComponent,
 } from "echarts/components";
+import ErrorSnackbar from '../../components/ErrorSnackbar/ErrorSnackbar';
+
 import { CanvasRenderer } from "echarts/renderers";
 
 import irelandCounties from "./../../assets/ireland.json";
@@ -44,7 +46,10 @@ export default function IrelandCityMapView() {
         });
         setData(mapped);
       } catch (e: any) {
-        setError(e?.message ?? "failed to fetch");
+        const msg = !navigator.onLine
+          ? 'The network seems to be disconnected, please check the network connection.'
+          : (e?.message ?? 'Failed to load Data, please try again later.');
+        setError(msg);        
       } finally {
         setLoading(false);
       }
@@ -109,6 +114,10 @@ export default function IrelandCityMapView() {
         Ireland – County Charging Station Count
       </div>
       <ReactECharts option={option} style={{ height: 550 }} />
+      <ErrorSnackbar
+        error={error}
+        onClose={() => setError(null)}
+      />
     </div>
   );
 }

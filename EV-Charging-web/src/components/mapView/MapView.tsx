@@ -15,6 +15,8 @@ import { Fade, IconButton, Fab } from '@mui/material';
 import CloseIcon from '@mui/icons-material/Close';
 import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined';
 
+import ErrorSnackbar from '../../components/ErrorSnackbar/ErrorSnackbar';
+
 import markerPng from './../../assets/marker.png';
 import './MapView.css';
 
@@ -172,7 +174,6 @@ export default function MapView() {
         //   ? `${timePoint.replace(' ', 'T')}:00Z`
         //   : timePoint;
         let pts = res.data[isoTime] || [];
-        console.log(pts, 'pts')
         // console.log('pts', res.data, timePoint)
         setMarkers(pts);
         const SEP = /[,&/]/;
@@ -193,7 +194,10 @@ export default function MapView() {
         // dispatch(setPowerLimits([minPower, maxPower]));
       } catch (err) {
         console.error('Failed to load charging post data', err);
-        setError('Failed to load charging post data, please try again later.');
+        const msg = !navigator.onLine
+          ? 'The network seems to be disconnected, please check the network connection.'
+          : 'Charge station data loading failed, please try again later.';
+        setError(msg);
       } finally {
         setLoading(false);
       }
@@ -432,6 +436,10 @@ export default function MapView() {
           </Fab>
         )}
       </div>
+      <ErrorSnackbar
+        error={error}
+        onClose={() => setError(null)}
+      />
     </div>
   );
 }
