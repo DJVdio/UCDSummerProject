@@ -19,6 +19,10 @@ const initialState: TimeState = {
   timePoint: initialPoint,
   timeRange: { timeStart: new Date(nowTime.getTime() - DAY_MS).toISOString(), timeEnd: initialPoint },
 };
+const toIso = (v: string) => {
+  const s = v.includes('T') ? v : v.replace(' ', 'T');
+  return new Date(s).toISOString();
+};
 const clampRange = (startMs: number, endMs: number) => {
   let diff = endMs - startMs;
 
@@ -58,13 +62,16 @@ const timeSlice = createSlice({
     },
     /* —— 只改 end —— */
     setTimeEnd(state, { payload }: PayloadAction<string>) {
-      const endMs = new Date(payload).getTime();
+      const endIso = toIso(payload);           // 原始用户选择
+      const endMs = new Date(endIso).getTime();
       const startMs = new Date(state.timeRange.timeStart).getTime();
       const { startMs: s, endMs: e } = clampRange(startMs, endMs);
 
       state.timeRange.timeStart = new Date(s).toISOString();
-      state.timeRange.timeEnd = new Date(e).toISOString();
-      state.timePoint = state.timeRange.timeEnd;
+      state.timeRange.timeEnd   = new Date(e).toISOString();
+
+      // 关键：timePoint 用原始 end（不跟随夹紧后的 e）
+      state.timePoint = endIso;
     },
   },
 });

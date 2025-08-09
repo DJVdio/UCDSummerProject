@@ -5,8 +5,23 @@ import { MapContainer, TileLayer, Marker, CircleMarker, Popup, FeatureGroup, Geo
 import { EditControl } from 'react-leaflet-draw';
 import MarkerClusterGroup from 'react-leaflet-cluster';
 
-import { Icon, type PointTuple, type FeatureGroup as LeafletFeatureGroup, type LatLngExpression } from 'leaflet';
+import L from 'leaflet';
 
+// 值（函数/构造器）用普通 import
+import { Icon } from 'leaflet';
+
+// 类型用 type-only import（关键！）
+import type {
+  FeatureGroup as LeafletFeatureGroup,
+  Polygon as LeafletPolygon,
+  Rectangle as LeafletRectangle,
+  PointTuple,
+  LatLngExpression
+} from 'leaflet';
+
+import counties from './../../assets/ireland.json'; // FeatureCollection
+import booleanWithin from '@turf/boolean-within';
+import { Feature, Geometry } from 'geojson';
 import { getMapMarkers, EVMarker, getMapMarkersByRect } from './../../api/map';
 import { useAppDispatch, useAppSelector } from '../../hooks';
 import { setAvailableConnectorTypes /*, setPowerLimits*/ } from './../../store/mapSlice';
@@ -32,11 +47,6 @@ const statusToIconUrl = (status?: string) => {
   }
 };
 
-// const customIcon = new Icon({
-//   iconUrl: markerPng,
-//   iconSize: [38, 38],
-//   iconAnchor: [19, 38],
-// });
 
 const createPngIcon = (
   status?: string,
@@ -67,13 +77,40 @@ export default function MapView() {
   // control legend
   const [isLegendOpen, setLegendOpen] = useState(true);
   // when isCustomRegionEnabled = false, Clear polygons from the map
-  const featureGroupRef = useRef<L.FeatureGroup<any> | null>(null);
+  // ref 类型
+  const featureGroupRef = useRef<LeafletFeatureGroup | null>(null);
+
+  // 回退相关
+  // const editRef = useRef<any>(null);
+
+  // const drawnLayerRef = useRef<LeafletPolygon | LeafletRectangle | null>(null);
+  // const lastValidLatLngsRef = useRef<any>(null);
+
   // use for api
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
   // store makers from backend
   const [markers, setMarkers] = useState<EVMarker[]>([]);
+
+  const lastValidRegionRef = useRef<GeoJSON.Geometry | null>(null);
+
   const dispatch = useAppDispatch();
+
+  // const geoJsonPolygonToLatLngs = (poly: GeoJSON.Polygon) => {
+  //   const ring = poly.coordinates[0];          // [[lng,lat], ...]
+  //   return ring.map(([lng, lat]) => ({ lat, lng }));
+  // };
+  const isUserRectInsideCounty = (userGeom: GeoJSON.Polygon, county: Feature<Geometry> | null) => {
+    if (!county) return true; // 如果当前没加载边界，可以选择直接放行，也可以 return false 阻止
+    try {
+      // Turf 需要 Feature 类型，所以把几何包一层 Feature
+      const userFeature: Feature<Geometry> = { type: 'Feature', properties: {}, geometry: userGeom };
+      return booleanWithin(userFeature as any, county as any);
+    } catch (e) {
+      console.warn('范围检测失败:', e);
+      return false;
+    }
+  }
   /** GeoJSON Polygon（矩形）坐标转左上/右下角
    *  GeoJSON 坐标顺序是 [lon, lat]
    */
@@ -110,6 +147,18 @@ export default function MapView() {
     return Array.from(bytes, b => b.toString(16).padStart(2, '0')).join('');
   }
 
+  // 找到与当前选择位置匹配的郡县 Feature
+  const currentCountyFeature = useMemo<Feature<Geometry> | null>(() => {
+    if (!currentLocationId) return null;
+
+    // 根据你的数据格式修改匹配逻辑（id / code / name 等）
+    const f = (counties as any)?.features?.find(
+      (it: any) =>
+        it?.properties?.id === currentLocationId ||
+        it?.properties?.name === locations.find(l => l.id === currentLocationId)?.label
+    );
+    return f ?? null;
+  }, [currentLocationId, locations]);
 
   const [minP, maxP] = useMemo(() => {
     if (Array.isArray(powerRange) && powerRange.length === 2) {
@@ -119,6 +168,7 @@ export default function MapView() {
     }
     return [20, 200];
   }, [powerRange]);
+
   const displayedMarkers = useMemo(() => {
     return markers.filter(m => {
       // 按power rating过滤
@@ -139,34 +189,120 @@ export default function MapView() {
   }, [markers, connectorTypes, minP, maxP]);
   // 当用户画完一个矩形时
   /** 处理绘制完成事件 —— 只会收到矩形（Polygon） */
+  // const _onCreated = (e: any) => {
+  //   const layer = e.layer;
+  //   const feature = layer.toGeoJSON() as GeoJSON.Feature<
+  //     GeoJSON.Polygon,
+  //     GeoJSON.GeoJsonProperties
+  //   >;
+  //   const geometry = feature.geometry;
+
+  //   // 保证只保留一个绘制区域
+  //   if (featureGroupRef.current) {
+  //     const fg = featureGroupRef.current as any;
+  //     fg.clearLayers();
+  //     fg.addLayer(layer);
+  //   }
+
+  //   setRegionGeoJson(geometry);
+  // };
+  // 编辑矩形后也能随时更新
+  // const _onEdited = (e: any) => {
+  //   e.layers.eachLayer((layer: any) => {
+  //     const feature = layer.toGeoJSON() as GeoJSON.Feature<GeoJSON.Polygon, GeoJSON.GeoJsonProperties>;
+  //     setRegionGeoJson(feature.geometry);
+  //   });
+  // };
+  // // User deletes an existing polygon
+
   const _onCreated = (e: any) => {
-    const layer = e.layer;
-    const feature = layer.toGeoJSON() as GeoJSON.Feature<
-      GeoJSON.Polygon,
-      GeoJSON.GeoJsonProperties
-    >;
+    const layer = e.layer as LeafletPolygon | LeafletRectangle;
+    const feature = layer.toGeoJSON() as GeoJSON.Feature<GeoJSON.Polygon>;
     const geometry = feature.geometry;
 
-    // 保证只保留一个绘制区域
+    const ok = isUserRectInsideCounty(geometry, currentCountyFeature);
+    if (!ok) {
+      setError('The area selected must be within the current county boundaries.');
+      if (featureGroupRef.current) (featureGroupRef.current as any).removeLayer(layer);
+      return;
+    }
+
     if (featureGroupRef.current) {
       const fg = featureGroupRef.current as any;
       fg.clearLayers();
       fg.addLayer(layer);
     }
 
+    // drawnLayerRef.current = layer;
+    // 存深拷贝
+    // lastValidLatLngsRef.current = cloneLatLngs(layer.getLatLngs());
+
     setRegionGeoJson(geometry);
+    lastValidRegionRef.current = geometry;
   };
-  // 编辑矩形后也能随时更新
+
   const _onEdited = (e: any) => {
+    let anyInvalid = false;
+
     e.layers.eachLayer((layer: any) => {
-      const feature = layer.toGeoJSON() as GeoJSON.Feature<GeoJSON.Polygon, GeoJSON.GeoJsonProperties>;
-      setRegionGeoJson(feature.geometry);
+      const poly = layer as LeafletPolygon | LeafletRectangle;
+      const feature = poly.toGeoJSON() as GeoJSON.Feature<GeoJSON.Polygon>;
+      const geometry = feature.geometry;
+
+      const ok = isUserRectInsideCounty(geometry, currentCountyFeature);
+
+      if (!ok) {
+        anyInvalid = true;
+
+        // 1) 移除无效图层
+        // if (featureGroupRef.current) {
+        //   (featureGroupRef.current as any).removeLayer(poly);
+        // }
+
+        // 2) 用最后一次合法的几何重建一个新图层
+        // if (lastValidRegionRef.current && featureGroupRef.current) {
+        //   const latlngs = geoJsonPolygonToLatLngs(
+        //     lastValidRegionRef.current as GeoJSON.Polygon
+        //   );
+
+        //   // 用 polygon 重建（如需严格矩形，可改用 L.rectangle(latLngBounds, ...))
+        //   const restored = L.polygon(latlngs as any, {
+        //     color: '#f357a1',
+        //     weight: 4,
+        //   });
+
+        //   (featureGroupRef.current as any).addLayer(restored);
+
+        //   // 更新引用/状态（注意用深拷贝）
+        //   drawnLayerRef.current = restored;
+        //   lastValidLatLngsRef.current = cloneLatLngs(restored.getLatLngs());
+          setRegionGeoJson(lastValidRegionRef.current);
+        // }
+      } else {
+        // 合法：刷新“最后合法”记录
+        // lastValidLatLngsRef.current = cloneLatLngs(poly.getLatLngs());
+        // lastValidRegionRef.current = geometry;
+        setRegionGeoJson(geometry);
+        // drawnLayerRef.current = poly;
+      }
     });
+
+    if (anyInvalid) {
+      setError('The edited area is beyond the current county limits.');
+
+      // 重新启用编辑模式，让拖拽手柄与图形对齐
+      // const handler = editRef.current?._toolbars?.edit?._modes?.edit?.handler;
+      // handler?.disable?.();
+      // handler?.enable?.();
+    }
   };
-  // // User deletes an existing polygon
+
   const _onDeleted = () => {
     setRegionGeoJson(null);
     setMarkers([]); // clear all ev charging
+    // drawnLayerRef.current = null;
+    // lastValidLatLngsRef.current = null;
+    // lastValidRegionRef.current = null;
   };
 
   // if isCustomRegionEnabled = false, clear the drawing layer and set polygonGeoJson to null
@@ -181,6 +317,7 @@ export default function MapView() {
 
   // request data of mock when isCustomRegionEnabled = false
   useEffect(() => {
+    console.log(timePoint, currentLocationId, 'aaaaaaa')
     // if (isCustomRegionEnabled) return;
     if (!timePoint || !currentLocationId || isCustomRegionEnabled) {
       setMarkers([]);
@@ -243,7 +380,14 @@ export default function MapView() {
     if (!(isCustomRegionEnabled && regionGeoJson && timePoint && currentLocationId)) {
       return;
     }
-
+    // 请求前做范围校验
+    if (currentCountyFeature && regionGeoJson.type === 'Polygon') {
+      const ok = isUserRectInsideCounty(regionGeoJson, currentCountyFeature);
+      if (!ok) {
+        setError('选择的区域必须在当前郡县范围内。');
+        return;
+      }
+    }
     setLoading(true);
     setError(null);
 

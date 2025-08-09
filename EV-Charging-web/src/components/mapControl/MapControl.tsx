@@ -73,12 +73,13 @@ export default function MapControl() {
       const now = new Date();
       setSelectedDate(now);
 
-      const pad = (n: number) => n.toString().padStart(2, '0');
-      const dateString =
-        `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())} ` +
-        `${pad(now.getHours())}:${pad(now.getMinutes())}`;
+      // const pad = (n: number) => n.toString().padStart(2, '0');
+      // const dateString =
+      //   `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())} ` +
+      //   `${pad(now.getHours())}:${pad(now.getMinutes())}`;
 
-      dispatch(setTimeEnd(dateString));
+      // dispatch(setTimeEnd(dateString));
+      dispatch(setTimeEnd(now.toISOString()));
     } else {
       const d = new Date(timePoint);
       if (!isNaN(d.getTime())) {
@@ -86,26 +87,29 @@ export default function MapControl() {
         setSelectedDate(d);
       }
     }
-  }, [timePoint]);
+  }, [timePoint, dispatch]);
 
   // select date
   const handleDateChange = (newValue: Date | null) => {
     if (!newValue || isNaN(newValue.getTime())) return;
     if (newValue && newValue > new Date()) return;
     if (newValue < MIN_ALLOWED) return;
+    // setSelectedDate(newValue);
+
+    // // Convert the Date to the string format required by the backend.
+    // // Assume that the backend requires ‘YYYY-MM-DD’; if need hours, minutes, and seconds, use date.toISOString().
+    // const year = newValue.getFullYear();
+    // const month = String(newValue.getMonth() + 1).padStart(2, '0');
+    // const day = String(newValue.getDate()).padStart(2, '0');
+    // const hours = String(newValue.getHours()).padStart(2, '0');
+    // const minutes = String(newValue.getMinutes()).padStart(2, '0');
+    // const dateString = `${year}-${month}-${day} ${hours}:${minutes}`;
+
+    // // dispatch to Redux
+    // dispatch(setTimeEnd(dateString));
+    console.log(newValue.toISOString(), 'newValue')
     setSelectedDate(newValue);
-
-    // Convert the Date to the string format required by the backend.
-    // Assume that the backend requires ‘YYYY-MM-DD’; if need hours, minutes, and seconds, use date.toISOString().
-    const year = newValue.getFullYear();
-    const month = String(newValue.getMonth() + 1).padStart(2, '0');
-    const day = String(newValue.getDate()).padStart(2, '0');
-    const hours = String(newValue.getHours()).padStart(2, '0');
-    const minutes = String(newValue.getMinutes()).padStart(2, '0');
-    const dateString = `${year}-${month}-${day} ${hours}:${minutes}`;
-
-    // dispatch to Redux
-    dispatch(setTimeEnd(dateString));
+    dispatch(setTimeEnd(newValue.toISOString()));
   };
 
   return (
