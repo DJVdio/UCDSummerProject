@@ -47,18 +47,6 @@ const statusToIconUrl = (status?: string) => {
   }
 };
 
-type LatLngLike = { lat: number; lng: number };
-function cloneLatLngs(input: any): any {
-  if (Array.isArray(input)) {
-    return input.map(cloneLatLngs);
-  }
-  if (input && typeof input === 'object' && 'lat' in input && 'lng' in input) {
-    const p = input as LatLngLike;
-    // 返回 LatLngLiteral，Leaflet 的 setLatLngs 可以接受
-    return { lat: p.lat, lng: p.lng };
-  }
-  return input;
-}
 
 const createPngIcon = (
   status?: string,
@@ -108,10 +96,10 @@ export default function MapView() {
 
   const dispatch = useAppDispatch();
 
-  const geoJsonPolygonToLatLngs = (poly: GeoJSON.Polygon) => {
-    const ring = poly.coordinates[0];          // [[lng,lat], ...]
-    return ring.map(([lng, lat]) => ({ lat, lng }));
-  };
+  // const geoJsonPolygonToLatLngs = (poly: GeoJSON.Polygon) => {
+  //   const ring = poly.coordinates[0];          // [[lng,lat], ...]
+  //   return ring.map(([lng, lat]) => ({ lat, lng }));
+  // };
   const isUserRectInsideCounty = (userGeom: GeoJSON.Polygon, county: Feature<Geometry> | null) => {
     if (!county) return true; // 如果当前没加载边界，可以选择直接放行，也可以 return false 阻止
     try {
@@ -288,7 +276,7 @@ export default function MapView() {
         //   // 更新引用/状态（注意用深拷贝）
         //   drawnLayerRef.current = restored;
         //   lastValidLatLngsRef.current = cloneLatLngs(restored.getLatLngs());
-        //   setRegionGeoJson(lastValidRegionRef.current);
+          setRegionGeoJson(lastValidRegionRef.current);
         // }
       } else {
         // 合法：刷新“最后合法”记录
@@ -329,6 +317,7 @@ export default function MapView() {
 
   // request data of mock when isCustomRegionEnabled = false
   useEffect(() => {
+    console.log(timePoint, currentLocationId, 'aaaaaaa')
     // if (isCustomRegionEnabled) return;
     if (!timePoint || !currentLocationId || isCustomRegionEnabled) {
       setMarkers([]);
