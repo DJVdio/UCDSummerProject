@@ -299,7 +299,7 @@ export default function MapView() {
 
   const _onDeleted = () => {
     setRegionGeoJson(null);
-    setMarkers([]); // clear all ev charging
+    // setMarkers([]); // clear all ev charging
     // drawnLayerRef.current = null;
     // lastValidLatLngsRef.current = null;
     // lastValidRegionRef.current = null;
@@ -320,7 +320,7 @@ export default function MapView() {
     console.log(timePoint, currentLocationId, 'aaaaaaa')
     // if (isCustomRegionEnabled) return;
     if (!timePoint || !currentLocationId || isCustomRegionEnabled) {
-      setMarkers([]);
+      // setMarkers([]);
       console.log('currentTime or currentLocationId is empty')
       return;
     }
