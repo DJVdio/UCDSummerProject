@@ -27,7 +27,6 @@ export default function TimeRangeController() {
 
   // DateTimePickers update
   const onStartChange = (newValue: Date | null) => {
-    console.log('start', newValue, new Date())
     if (!newValue) return;
     if (newValue && newValue > new Date()) return;
     if (newValue < MIN_ALLOWED_START) return;
