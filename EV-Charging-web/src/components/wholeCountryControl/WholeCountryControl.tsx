@@ -18,14 +18,8 @@ const isBeforeDayStart = (date: Date) => date < MIN_ALLOWED_START;
 export default function TimeRangeController() {
   const dispatch = useAppDispatch();
   const { timeRange, timePoint } = useAppSelector(s => s.time);
-  const { locations, currentLocationId, isCustomRegionEnabled } =
-    useAppSelector(s => s.map);
-  const [isInvalid, setIsInvalid] = useState(false);
 
-  // select city
-  const handleLocationChange = (locId: string) => {
-    dispatch(setLocation(locId));
-  };
+  const [isInvalid, setIsInvalid] = useState(false);
 
   useEffect(() => {
     dispatch(fetchCities());
@@ -33,6 +27,7 @@ export default function TimeRangeController() {
 
   // DateTimePickers update
   const onStartChange = (newValue: Date | null) => {
+    console.log('start', newValue, new Date())
     if (!newValue) return;
     if (newValue && newValue > new Date()) return;
     if (newValue < MIN_ALLOWED_START) return;
@@ -75,6 +70,7 @@ export default function TimeRangeController() {
                 value={timeRange.timeStart ? new Date(timeRange.timeStart) : null}
                 onChange={onStartChange}
                 minutesStep={1}
+                maxDate={new Date(new Date().getFullYear(), new Date().getMonth(), new Date().getDate() - 1)}
                 disableFuture
                 shouldDisableDate={isBeforeDayStart}
                 onError={(reason: DateTimeValidationError | null) =>

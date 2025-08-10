@@ -101,6 +101,7 @@ export default function TimeRangeController() {
                 value={timeRange.timeStart ? new Date(timeRange.timeStart) : null}
                 onChange={onStartChange}
                 minutesStep={1}
+                maxDate={new Date(new Date().getFullYear(), new Date().getMonth(), new Date().getDate() - 1)}
                 disableFuture
                 shouldDisableDate={isBeforeDayStart}
                 onError={(reason: DateTimeValidationError | null) =>
