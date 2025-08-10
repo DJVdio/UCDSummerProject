@@ -160,7 +160,12 @@ export default function DashboardView() {
     }
     getUtilisation()
   }, [currentLocationId, timeRange.timeStart, timeRange.timeEnd]);
-
+  // 统一UTC
+  const fmtUTC = new Intl.DateTimeFormat('en-GB', {
+    hour: '2-digit',
+    minute: '2-digit',
+    timeZone: 'UTC',
+  });
   const lineOption = useCallback(
     () => ({
       tooltip: { trigger: "axis" },
@@ -200,24 +205,16 @@ export default function DashboardView() {
       tooltip: {
         trigger: 'axis',
         formatter: (params: any) => {
-          const ts = params[0].value[0]; // x
+          const ts = params[0].value[0]; // x(ms, UTC)
           const count = params[0].value[1]; // y
-          const time = new Date(ts).toLocaleTimeString(
-            'en-GB',
-            { hour: '2-digit', minute: '2-digit', timeZone: 'UTC' }
-          );
-          return `${time}<br/>Session Counts ${count}`;
+          return `${fmtUTC.format(new Date(ts))}<br/>Session Counts ${count}`;
         },
       },
       legend: { data: ['Session Counts'] },
       xAxis: {
         type: 'time',
         axisLabel: {
-          formatter: (ts: number) =>
-            new Date(ts).toLocaleTimeString(
-              'en-GB',
-              { hour: '2-digit', minute: '2-digit', timeZone: 'UTC' }
-            ),
+          formatter: (ts: number) => fmtUTC.format(new Date(ts)),
         },
       },
       yAxis: { type: 'value', name: 'Session Counts' },
@@ -231,32 +228,37 @@ export default function DashboardView() {
     [sessions]
   );
 
+
   const barEDOption = useCallback(
     () => ({
-      tooltip: { trigger: "axis" },
-      legend: { data: ["Energy (kWh)"] },
-      xAxis: {
-        type: "time",
-        axisLabel: {
-          formatter: (ts: number) =>
-            new Date(ts).toLocaleTimeString("en-GB", {
-              hour: "2-digit",
-              minute: "2-digit",
-            }),
+      tooltip: {
+        trigger: 'axis',
+        formatter: (params: any) => {
+          const ts = params[0].value[0];
+          const val = params[0].value[1];
+          return `${fmtUTC.format(new Date(ts))}<br/>Energy (kWh) ${val}`;
         },
       },
-      yAxis: { type: "value", name: "kWh" },
+      legend: { data: ['Energy (kWh)'] },
+      xAxis: {
+        type: 'time',
+        axisLabel: {
+          formatter: (ts: number) => fmtUTC.format(new Date(ts)),
+        },
+      },
+      yAxis: { type: 'value', name: 'kWh' },
       series: [
         {
-          name: "Energy (kWh)",
-          type: "bar",
-          itemStyle: { color: "#5a6fc0" },
-          data: energy.map((data) => [Date.parse(data.time), data.energy]),
+          name: 'Energy (kWh)',
+          type: 'bar',
+          itemStyle: { color: '#5a6fc0' },
+          data: energy.map(d => [dayjs.utc(d.time).valueOf(), d.energy]),
         },
       ],
     }),
     [energy]
   );
+
   const displayIds = useMemo(
     () => stationIds.map(id => (id.startsWith('S') ? id : `S${id}`)),
     [stationIds]

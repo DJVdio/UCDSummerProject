@@ -61,36 +61,37 @@ export default function DashboardView() {
 
   }, [currentLocationId, timeRange.timeStart, timeRange.timeEnd]);
 
+  const fmtUTC = new Intl.DateTimeFormat('en-GB', {
+    hour: '2-digit',
+    minute: '2-digit',
+    timeZone: 'UTC',
+  });
   const lineOption = useCallback(
     () => ({
-      tooltip: { trigger: "axis" },
-      legend: { data: ["Generation", "grid load"] },
-      // xAxis: { type: "category", data: genCon.map((d) => d.time) },
+      tooltip: { trigger: 'axis' },
+      legend: { data: ['Generation', 'Grid Load'] },
       xAxis: {
         type: 'time',
         boundaryGap: false,
         axisLabel: {
-          formatter: (ts: number) => {
-            const date = new Date(ts);
-            return date.toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'});
-          }
-        }
+          formatter: (ts: number) => fmtUTC.format(new Date(ts)),
+        },
       },
-      yAxis: { type: "value", name: "kW" },
+      yAxis: { type: 'value', name: 'MW' }, // 这里改成 MW，更贴近你的字段
       series: [
         {
           name: 'Generation',
           type: 'line',
           smooth: true,
-          data: genCon.map(data => [new Date(data.time).getTime(), data.generation]),
+          data: genCon.map(d => [dayjs.utc(d.time).valueOf(), d.generation]),
         },
         {
-          name: 'grid load',
+          name: 'Grid Load',
           type: 'line',
           smooth: true,
-          data: genCon.map(data => [new Date(data.time).getTime(), data.grid_load]),
-        }
-      ]
+          data: genCon.map(d => [dayjs.utc(d.time).valueOf(), d.grid_load]),
+        },
+      ],
     }),
     [genCon]
   );
