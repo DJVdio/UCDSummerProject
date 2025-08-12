@@ -4,6 +4,7 @@ import { parseISO, format } from 'date-fns';
 import { MapContainer, TileLayer, Marker, CircleMarker, Popup, FeatureGroup, GeoJSON } from 'react-leaflet';
 import { EditControl } from 'react-leaflet-draw';
 import MarkerClusterGroup from 'react-leaflet-cluster';
+import { setCustomRegionEnabled } from './../../store/mapSlice';
 
 import L from 'leaflet';
 
@@ -187,33 +188,21 @@ export default function MapView() {
       return markerTypes.some(t => connectorTypes.includes(t));
     });
   }, [markers, connectorTypes, minP, maxP]);
-  // 当用户画完一个矩形时
-  /** 处理绘制完成事件 —— 只会收到矩形（Polygon） */
-  // const _onCreated = (e: any) => {
-  //   const layer = e.layer;
-  //   const feature = layer.toGeoJSON() as GeoJSON.Feature<
-  //     GeoJSON.Polygon,
-  //     GeoJSON.GeoJsonProperties
-  //   >;
-  //   const geometry = feature.geometry;
 
-  //   // 保证只保留一个绘制区域
-  //   if (featureGroupRef.current) {
-  //     const fg = featureGroupRef.current as any;
-  //     fg.clearLayers();
-  //     fg.addLayer(layer);
+  useEffect(() => {
+    // 回到地图页时，关掉“Use Custom Region”
+    dispatch(setCustomRegionEnabled(false));
+    setRegionGeoJson(null);
+    if (featureGroupRef.current) {
+      featureGroupRef.current.clearLayers();
+    }
+  }, []);
+  // useEffect(() => {
+  //   if (isCustomRegionEnabled && !regionGeoJson) {
+  //     // 没有区域就自动关掉自定义，回到默认数据加载
+  //     dispatch(setCustomRegionEnabled(false));
   //   }
-
-  //   setRegionGeoJson(geometry);
-  // };
-  // 编辑矩形后也能随时更新
-  // const _onEdited = (e: any) => {
-  //   e.layers.eachLayer((layer: any) => {
-  //     const feature = layer.toGeoJSON() as GeoJSON.Feature<GeoJSON.Polygon, GeoJSON.GeoJsonProperties>;
-  //     setRegionGeoJson(feature.geometry);
-  //   });
-  // };
-  // // User deletes an existing polygon
+  // }, [isCustomRegionEnabled, regionGeoJson, dispatch]);
 
   const _onCreated = (e: any) => {
     const layer = e.layer as LeafletPolygon | LeafletRectangle;
@@ -299,10 +288,9 @@ export default function MapView() {
 
   const _onDeleted = () => {
     setRegionGeoJson(null);
-    // setMarkers([]); // clear all ev charging
-    // drawnLayerRef.current = null;
-    // lastValidLatLngsRef.current = null;
-    // lastValidRegionRef.current = null;
+    if (featureGroupRef.current) featureGroupRef.current.clearLayers();
+
+    dispatch(setCustomRegionEnabled(false));
   };
 
   // if isCustomRegionEnabled = false, clear the drawing layer and set polygonGeoJson to null
@@ -384,7 +372,7 @@ export default function MapView() {
     if (currentCountyFeature && regionGeoJson.type === 'Polygon') {
       const ok = isUserRectInsideCounty(regionGeoJson, currentCountyFeature);
       if (!ok) {
-        setError('选择的区域必须在当前郡县范围内。');
+        setError('The area selected must be within the current county boundaries.');
         return;
       }
     }
