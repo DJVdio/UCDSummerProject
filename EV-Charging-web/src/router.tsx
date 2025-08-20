@@ -1,5 +1,5 @@
 // src/router.jsx
-import { Navigate, createBrowserRouter } from "react-router-dom";
+import { Navigate, createHashRouter } from "react-router-dom";
 import MainLayout from "./components/layout/MainLayout";
 import Location from "./pages/Location/Location";
 import Dashboard from "./pages/Dashboard/Dashboard";
@@ -7,7 +7,7 @@ import Dashboard from "./pages/Dashboard/Dashboard";
 import DataAnalysis from "./pages/DataAnalysis/DataAnalysis";
 
 
-export default createBrowserRouter([
+export default createHashRouter([
   {
     path: "/",
     element: <MainLayout />,
