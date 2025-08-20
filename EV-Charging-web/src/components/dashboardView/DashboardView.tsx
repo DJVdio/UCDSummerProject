@@ -292,6 +292,7 @@ export default function DashboardView() {
         data: Array.from({ length: 24 }, (_, i) => `${String(i).padStart(2, "0")}:00`),
         splitArea: { show: true },
         axisTick: { alignWithLabel: true },
+        axisLabel: { margin: 12 },
       },
       yAxis: {
         type: "category",
@@ -306,9 +307,9 @@ export default function DashboardView() {
         min: 0,
         max: 1,
         calculable: true,
-        orient: "horizontal",
-        left: "center",
-        bottom: 10,
+        orient: 'vertical',
+        left: 0,
+        top: 'bottom',
       },
       series: [
         {
